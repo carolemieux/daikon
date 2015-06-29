@@ -28,6 +28,8 @@ public enum OutputFormat {
   JML("JML"),
   /** Simplify theorem prover */
   SIMPLIFY("Simplify"),
+  /** SMTLIBv2 language for SMT solvers */
+  SMTLIBV2("SMTLIBv2"),
   /** C# Code Contract */
   CSHARPCONTRACT("CSharpContract");
 
@@ -57,6 +59,7 @@ public enum OutputFormat {
     if (name.compareToIgnoreCase(JAVA.name) == 0) { return JAVA; }
     if (name.compareToIgnoreCase(JML.name) == 0) { return JML; }
     if (name.compareToIgnoreCase(SIMPLIFY.name) == 0) { return SIMPLIFY; }
+    if (name.compareToIgnoreCase(SMTLIBV2.name) == 0) { return SMTLIBV2; }
     if (name.compareToIgnoreCase(CSHARPCONTRACT.name) == 0) { return CSHARPCONTRACT; }
     // return null;
     throw new Error("Unknown OutputFormat " + name);

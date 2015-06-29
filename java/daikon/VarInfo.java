@@ -1611,6 +1611,25 @@ public final /*@Interned*/ class VarInfo implements Cloneable, Serializable {
     return simplifyFixup(simplify_name());
   }
 
+
+
+  /**
+   * A wrapper around VarInfoName.smtlibv2_name() that also uses
+   * VarInfo information to guess whether "obj" should logically be
+   * treated as just the hash code of "obj", rather than the whole
+   * object.
+   **/
+  public String smtlibv2Fixup(String str) {
+    // TODO: figure out if "hash" strategy works in smtlibv2
+    //if (isPointer()) {
+    //  str = "(hash " + str + ")";
+    //}
+    return str;
+  }
+
+  public String smtlibv2FixedupName() {
+    return smtlibv2Fixup(smtlibv2_name());
+  }
   ///////////////////////////////////////////////////////////////////////////
   /// Utility functions
   ///
@@ -2963,6 +2982,7 @@ public final /*@Interned*/ class VarInfo implements Cloneable, Serializable {
   public String name_using (OutputFormat format) {
     if (format == OutputFormat.DAIKON) return name();
     if (format == OutputFormat.SIMPLIFY) return simplify_name();
+    if (format == OutputFormat.SMTLIBV2) return smtlibv2_name();
     if (format == OutputFormat.ESCJAVA) return esc_name();
     if (format == OutputFormat.JAVA) return java_name();
     if (format == OutputFormat.JML) return jml_name();
@@ -3283,6 +3303,92 @@ public final /*@Interned*/ class VarInfo implements Cloneable, Serializable {
     }
   }
 
+
+  /** Returns the name of this variable in smtlibv2 format **/
+  /*@SideEffectFree*/ public String smtlibv2_name() {
+    return smtlibv2_name (null);
+  }
+
+  /**
+   * Returns the name of this variable in smtlibv2 format.  If an index
+   * is specified, it is used as an array index.  It is an error to specify
+   * an index on a non-array variable.
+    **/
+  public String smtlibv2_name (/*@Nullable*/ String index) {
+    if (!FileIO.new_decl_format)
+      return var_info_name.smtlibv2_name(); // vin ok
+
+    assert (index == null) || file_rep_type.isArray() : index + " " + name();
+
+    if (index != null) { //TODO: support non-null index
+    }
+
+    return "|" + name() + "|";
+    
+    // TODO: adjust for selection, etc, as below. 
+    /*
+    // If this is a derived variable, the derivations builds the name
+    if (derived != null)
+      return derived.simplify_name ();
+
+    // Build the name by processing back through all of the enclosing variables
+    switch (var_kind) {
+    case FIELD:
+      assert relative_name != null : this;
+      return String.format ("(select |%s| %s)", relative_name,
+                            enclosing_var.simplify_name(index));
+    case FUNCTION:
+//function_args      assert function_args == null : "function args not implemented";
+      if (var_flags.contains (VarFlags.CLASSNAME))
+        return ("(typeof " + enclosing_var.simplify_name(index) +")");
+      if (var_flags.contains (VarFlags.TO_STRING))
+        return String.format ("(select |toString| %s)",
+                              enclosing_var.simplify_name(index));
+      if (enclosing_var != null)
+        return enclosing_var.simplify_name(index) + "." + relative_name + "()";
+      return str_name;
+    case ARRAY:
+      if (index == null)
+        return String.format("(select elems %s)",
+                             enclosing_var.simplify_name());
+      if (false && index.equals("|0|")) {
+        System.err.printf ("index = %s\n", index);
+        Throwable t = new Throwable();
+        t.printStackTrace();
+      }
+      return String.format ("(select (select elems %s) %s)",
+                            enclosing_var.simplify_name(), index);
+    case VARIABLE:
+      if (dkconfig_constant_fields_simplify && str_name.contains(".")) {
+        String sel = null;
+        String[] fields = null;
+        if (postState != null) {
+          fields = postState.name().split ("\\.");
+          sel = String.format ("(select |%s| |__orig__%s|)", fields[1],
+                               fields[0]);
+        } else { // not orig variable
+          fields = str_name.split ("\\.");
+          sel = String.format ("(select |%s| |%s|)", fields[1], fields[0]);
+        }
+        for (int ii = 2; ii < fields.length; ii++) {
+          sel = String.format ("(select |%s| %s)", fields[ii], sel);
+        }
+        return sel;
+      }
+
+      assert enclosing_var == null;
+      if (postState != null)
+        return "|__orig__" + postState.name() + "|";
+      return "|" + str_name + "|";
+    case RETURN:
+      return ("|return|");
+    default:
+      throw new Error("can't drop through switch statement");
+    }/*
+  }
+
+
+
   /**
    * Return the name of this variable in its prestate (orig)
    */
@@ -3290,6 +3396,8 @@ public final /*@Interned*/ class VarInfo implements Cloneable, Serializable {
     return ("orig(" + name() + ")").intern();
   }
 
+
+  // TODO: see if this needs to be copied over for SMTLIBV2 format
   /**
    * Returns the name of the size variable that correponds to this
    * array variable in simplify format.  Returns null if this variable
@@ -3383,6 +3491,7 @@ public final /*@Interned*/ class VarInfo implements Cloneable, Serializable {
   }
 
 
+  // TODO: do the two methods below need to be adjusted for smtlibv2?
   /**
    * Returns a string array with 3 elements.  The first element is
    * the sequence, the second element is the lower bound, and the third
@@ -3434,6 +3543,8 @@ public final /*@Interned*/ class VarInfo implements Cloneable, Serializable {
 
   }
 
+
+  // TODO: not sure if this is viable in SMTLIBv2 format or not
   /**
    * Return a string in simplify format that will seclect the
    * (index_base + index_off)-th element of the sequence specified by
@@ -3633,6 +3744,9 @@ public final /*@Interned*/ class VarInfo implements Cloneable, Serializable {
   public static String[] simplify_quantify (VarInfo ...vars) {
     return simplify_quantify (EnumSet.noneOf (QuantFlags.class), vars);
   }
+  // TODO: between this and prev todo were a bunch of simplify methods
+  // that might need to be adapted.
+
 
   /**
    * Returns a rough indication of the complexity of the variable.  Higher
