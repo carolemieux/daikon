@@ -3315,8 +3315,8 @@ public final /*@Interned*/ class VarInfo implements Cloneable, Serializable {
    * an index on a non-array variable.
     **/
   public String smtlibv2_name (/*@Nullable*/ String index) {
-    if (!FileIO.new_decl_format)
-      return var_info_name.smtlibv2_name(); // vin ok
+ //   if (!FileIO.new_decl_format)
+  //    return var_info_name.smtlibv2_name(); // vin ok
 
     assert (index == null) || file_rep_type.isArray() : index + " " + name();
 
@@ -3384,7 +3384,7 @@ public final /*@Interned*/ class VarInfo implements Cloneable, Serializable {
       return ("|return|");
     default:
       throw new Error("can't drop through switch statement");
-    }/*
+    }*/
   }
 
 
