@@ -137,7 +137,9 @@ public abstract class RANGE extends SUPERCLASS {
         String[] form = VarInfo.esc_quantify (var1);
         fmt_str = form[0] + "(" + fmt_str + ")" + form[2];
         v1 = form[1];
-      } else if (format == OutputFormat.SIMPLIFY) {
+      } 
+      // TODO: check if this sort of thing should apply to SMTLIBv2 format
+      else if (format == OutputFormat.SIMPLIFY) {
         String[] form = VarInfo.simplify_quantify (QuantFlags.element_wise(),
                                                    var1);
         fmt_str = form[0] + " " + fmt_str + " " + form[2];
@@ -287,6 +289,18 @@ public abstract class RANGE extends SUPERCLASS {
     public String get_format_str (OutputFormat format) {
       if (format == OutputFormat.SIMPLIFY)
         return ("(EQ 0 %var1%)");
+      else if (format == OutputFormat.SMTLIBV2) {
+        #if defined(SCALAR) || defined(SCALARSEQ)
+        String sort = "Int";
+        #else
+        String sort = "Real";
+        #endif
+        #if defined(SEQ)
+        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (= 0 (select %var1% i)))";
+        #else
+        return "decl: (declare-const %var1% " + sort + ") inv: (= 0 %var1%)";
+        #endif
+      }
       else
         return ("%var1% == 0");
     }
@@ -336,6 +350,18 @@ public abstract class RANGE extends SUPERCLASS {
     public String get_format_str (OutputFormat format) {
       if (format == OutputFormat.SIMPLIFY)
         return ("(EQ 1 %var1%)");
+      else if (format == OutputFormat.SMTLIBV2) {
+        #if defined(SCALAR) || defined(SCALARSEQ)
+        String sort = "Int";
+        #else
+        String sort = "Real";
+        #endif
+        #if defined(SEQ)
+        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (= 1 (select %var1% i)))";
+        #else
+        return "decl: (declare-const %var1% " + sort + ") inv: (= 1 %var1%)";
+        #endif
+      }
       else
         return ("%var1% == 1");
     }
@@ -385,6 +411,18 @@ public abstract class RANGE extends SUPERCLASS {
     public String get_format_str (OutputFormat format) {
       if (format == OutputFormat.SIMPLIFY)
         return ("(EQ -1 %var1%)");
+      else if (format == OutputFormat.SMTLIBV2) {
+        #if defined(SCALAR) || defined(SCALARSEQ)
+        String sort = "Int";
+        #else
+        String sort = "Real";
+        #endif
+        #if defined(SEQ)
+        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (= -1 (select %var1% i)))";
+        #else
+        return "decl: (declare-const %var1% " + sort + ") inv: (= -1 %var1%)";
+        #endif
+      }
       else
         return ("%var1% == -1");
     }
@@ -434,6 +472,18 @@ public abstract class RANGE extends SUPERCLASS {
     public String get_format_str (OutputFormat format) {
       if (format == OutputFormat.SIMPLIFY)
         return ("(>= %var1% 0)");
+      else if (format == OutputFormat.SMTLIBV2) {
+        #if defined(SCALAR) || defined(SCALARSEQ)
+        String sort = "Int";
+        #else
+        String sort = "Real";
+        #endif
+        #if defined(SEQ)
+        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (>= (select %var1% i) 0))";
+        #else
+        return "decl: (declare-const %var1% " + sort + ") inv: (>= %var1% 0)";
+        #endif
+      }
       else
         return ("%var1% >= 0");
     }
@@ -482,7 +532,19 @@ public abstract class RANGE extends SUPERCLASS {
 
     public String get_format_str (OutputFormat format) {
       if (format == OutputFormat.SIMPLIFY)
-        return ("(>= 64 %var1%)");
+        return ("(>= %var1% 64)");
+      else if (format == OutputFormat.SMTLIBV2) {
+        #if defined(SCALAR) || defined(SCALARSEQ)
+        String sort = "Int";
+        #else
+        String sort = "Real";
+        #endif
+        #if defined(SEQ)
+        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (>= (select %var1% i) 64))";
+        #else
+        return "decl: (declare-const %var1% " + sort + ") inv: (>= %var1% 64)";
+        #endif
+      }
       else
         return ("%var1% >= 64");
     }
@@ -533,6 +595,18 @@ public abstract class RANGE extends SUPERCLASS {
     public String get_format_str (OutputFormat format) {
       if (format == OutputFormat.SIMPLIFY)
         return ("(OR (EQ 0 %var1%) (EQ 1 %var1%))");
+      else if (format == OutputFormat.SMTLIBV2) {
+        #if defined(SCALAR) || defined(SCALARSEQ)
+        String sort = "Int";
+        #else
+        String sort = "Real";
+        #endif
+        #if defined(SEQ)
+        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (or (= (select %var1% i) 0) (= (select %var1% i) 1)))";
+        #else
+        return "decl: (declare-const %var1% " + sort + ") inv: (or (= %var1% 0) (= %var1% 1))";
+        #endif
+      }
       else
         return ("%var1% is boolean");
     }
@@ -586,6 +660,8 @@ public abstract class RANGE extends SUPERCLASS {
     public String get_format_str (OutputFormat format) {
       if (format == OutputFormat.SIMPLIFY)
         return ("(EXISTS (p) (EQ %var1% (pow 2 p)))");
+      if (format == OutputFormat.SMTLIBV2)
+        return "Can't handle powers of 2";  // TODO: proper error: not sure SMTLIBV2 supports nonlinera arith
       if (format == OutputFormat.JAVA)
         return "daikon.tools.runtimechecker.Runtime.isPowerOfTwo(%var1%)";
       if (format == OutputFormat.CSHARPCONTRACT)
@@ -664,6 +740,18 @@ public abstract class RANGE extends SUPERCLASS {
     public String get_format_str (OutputFormat format) {
       if (format == OutputFormat.SIMPLIFY)
         return ("(EQ (MOD %var1% 2) 0)");
+      else if (format == OutputFormat.SMTLIBV2) {
+        #if defined(SCALAR) || defined(SCALARSEQ)
+        String sort = "Int";
+        #else
+        String sort = "Real";
+        #endif
+        #if defined(SEQ)
+        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (= (mod (select %var1% i) 2) 0))";
+        #else
+        return "decl: (declare-const %var1% " + sort + ") inv: (= (mod %var1% 2) 0)";
+        #endif
+      }
       if (format == OutputFormat.CSHARPCONTRACT)
         return "%var1% % 2 == 0";
       else
@@ -729,6 +817,18 @@ public abstract class RANGE extends SUPERCLASS {
     public String get_format_str (OutputFormat format) {
       if (format == OutputFormat.SIMPLIFY)
         return ("(AND (>= %var1% 0) (>= 63 %var1%))");
+      else if (format == OutputFormat.SMTLIBV2) {
+        #if defined(SCALAR) || defined(SCALARSEQ)
+        String sort = "Int";
+        #else
+        String sort = "Real";
+        #endif
+        #if defined(SEQ)
+        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int))  (>= 63 (select %var1% i) 0))";
+        #else
+        return "decl: (declare-const %var1% " + sort + ") inv: (>= 63 %var1% 0)";
+        #endif
+      }
       else
         return ("0 <= %var1% <= 63");
     }

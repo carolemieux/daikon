@@ -353,6 +353,17 @@ public class LOWERBOUND
 #endif
     }
 
+    //TODO: update to format float/long
+    if (format == OutputFormat.SMTLIBV2) {
+#ifdef BASE_FLOAT
+      return "decl: (declare-const " + name + " Real) inv: (" + GTESTR + " " + name + " " + MIN1 + ")";
+#else
+      return "decl: (declare-const " + name + " Int) inv: (" + GTESTR + " " + name + " " + MIN1 + ")";
+#endif
+    }
+
+
+
     return format_unimplemented(format);
   }
 #else

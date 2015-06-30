@@ -577,6 +577,8 @@ public final class ONEOFSCALAR
       return format_daikon();
     } else if (format == OutputFormat.SIMPLIFY) {
       return format_simplify();
+    } else if (format == OutputFormat.SMTLIBV2) {
+      return format_smtlibv2();
     } else if (format == OutputFormat.ESCJAVA) {
       String result = format_esc();
       return result;
@@ -1399,6 +1401,157 @@ public String format_csharp_contract() {
     if (result.indexOf("format_simplify") == -1)
       daikon.simplify.SimpUtil.assert_well_formed(result);
     return result;
+  }
+
+public String format_smtlibv2() {
+#ifdef BASE_INT
+     // TODO: dkconfig...Simplify should be updated
+     if (is_hashcode() && dkconfig_omit_hashcode_values_Simplify)
+       return "(AND)";
+#endif
+    sort_rep();
+    String varname = var().name_using(OutputFormat.SMTLIBV2);
+    String decl_result;
+    String inv_result;
+#if defined(STRING) || defined(ELTSTRING)
+   // TODO: implement for string; probably need to declare-sort string
+    #if defined(STRING)
+    decl_result = "decl: (declare-const " + varname + " String)";
+    #else
+    decl_result = "decl: (declare-const " + varname + " (Array Int String))";
+    #endif
+    inv_result = "";
+    boolean is_type = is_type();
+    for (int i=0; i<num_elts; i++) {
+      String value = elts[i];
+      if (is_type) {
+        if (value == null) {
+          // do nothing
+        } else if (value.startsWith("[")) {
+          value = UtilMDE.fieldDescriptorToBinaryName(value);
+        } else if (value.startsWith("\"") && value.endsWith("\"")) {
+          value = value.substring(1, value.length()-1);
+        }
+        value = "|T_" + value + "|";
+      } else {
+        value = TOSTRING_SIMPLIFY(value); //TODO: update to other method
+      }
+      #if defined(STRING)
+      inv_result += " (= " + varname + " " + value + ")";
+      #else
+      inv_result += " (= (select " + varname + "i) " + value + ")";
+      #endif
+      decl_result += " (declare-const " + value + " String)";
+    }
+    if (num_elts > 1) {
+      #if defined(STRING)
+      inv_result = "inv: (or" + inv_result + ")";
+      #else
+      inv_result = "inv: (forall ((i Int)) (or" + inv_result + "))";
+      #endif
+    } else if (num_elts == 1) {
+      // chop leading space
+      #if defined(STRING)
+      inv_result = "inv:" + inv_result + ")";
+      #else
+      inv_result = "inv: (forall ((i Int))" + inv_result + ")";
+      #endif
+    } else if (num_elts == 0) {
+      return format_too_few_samples(OutputFormat.SIMPLIFY, null);
+    }
+#elif defined(SCALAR) || defined(ELT) || defined(FLOAT) || defined(ELTFLOAT)
+  #if defined(SCALAR) || defined(ELT)
+    if (is_boolean()) {
+      #if defined(SCALAR)
+      decl_result = "decl: (declare-constant " + varname + " Bool)";
+      #else
+      decl_result = "decl: (declare-constant " + varname + " (Array Int Bool))";
+      #endif
+      assert num_elts == 1;
+      assert (elts[0] == 0) || (elts[0] == 1);
+      #if defined(SCALAR)
+      inv_result = "inv: (= " + varname + " " + ((elts[0] == 0) ? "false" : "true") + ")";
+      #else
+      inv_result = "inv: (forall ((i Int)) (= (select " + varname + " i) " + ((elts[0] == 0) ? "false" : "true") + "))";
+      #endif
+    } else if (is_hashcode()) {
+      // TODO: also need to update hashcode value stuff. Using int for now
+      #if defined(SCALAR)
+      decl_result = "decl: (declare-constant " + varname + " Int)";
+      #else
+      decl_result = "decl: (declare-constant " + varname + " (Array Int Int))";
+      varname = "(select " + varname + " i)";
+      #endif
+      if (num_elts == 1) {
+        long hashcode_val = get_hashcode_val (elts[0]);
+        inv_result = "(= " + varname + " " +
+          ((elts[0] == 0) ? "null" :
+           ("(hashcode " + simplify_format_long(hashcode_val) + ")")) + ")";
+        #if defined(SCALAR)
+        inv_result = "inv: " + inv_result;
+        #else
+        inv_result = "inv: (forall ((i Int)) " + inv_result + ")";
+        #endif
+      } else if (num_elts == 2) {
+        // add_modified allows two elements iff one is null
+        assert elts[0] == 0;
+        assert elts[1] != 0;
+        long hashcode_val = get_hashcode_val (elts[1]);
+        inv_result = "(or (EQ " + varname + " null) (EQ " + varname
+          + "(hashcode " + simplify_format_long(hashcode_val) + ")))";
+        #if defined(SCALAR)
+        inv_result = "inv: " + inv_result;
+        #else
+        inv_result = "inv: (forall ((i Int)) " + inv_result + ")";
+        #endif
+      } else if (num_elts == 0) {
+        return format_too_few_samples(OutputFormat.SIMPLIFY, null);
+      } else {
+        throw new Error ("Contains more than 2 elements");
+      }
+    } else
+  #endif
+    {
+      #if defined(SCALAR)
+      decl_result = "decl: (declare-constant " + varname + " Int)";
+      #else
+      decl_result = "decl: (declare-constant " + varname + " (Array Int Int))";
+      varname = "(select " + varname + " i)";
+      #endif
+      inv_result = "";
+      for (int i=0; i<num_elts; i++) {
+        //right now using TOSTRING_SIMPLIFY. should be edited for SMTLIB spec
+        inv_result += " (= " + varname + " " + TOSTRING_SIMPLIFY(elts[i]) + ")";
+      }
+      if (num_elts > 1) {
+        #if defined(SCALAR)
+        inv_result = "inv: (or" + inv_result +")";
+        #else
+        inv_result = "inv: (forall ((i Int)) (or" + inv_result + "))";
+        #endif
+      } else if (num_elts == 1) {
+        #if defined(SCALAR)
+        inv_result = "inv:" + inv_result;
+        #else
+        inv_result = "inv: (forall ((i Int))" + inv_result + ")";
+        #endif
+      } else {
+        // Haven't actually seen any data, so we're vacuously true
+        return format_too_few_samples(OutputFormat.SIMPLIFY, null);
+      }
+    }
+#elif defined(IS_SEQUENCE) 
+    // TODO: update to actually work
+    decl_result= "format_smtlibv2() failed on a weird OneOf";
+    inv_result = "";
+#else
+    String classname = this.getClass().toString().substring(6); // remove leading "class "
+    return  "warning: method " + classname + ".format_smtlibv2() needs to be implemented: " + format();
+#endif
+   // TODO: have a similar thing for SMTLIBv2
+   // if (result.indexOf("format_simplify") == -1)
+   //   daikon.simplify.SimpUtil.assert_well_formed(result);
+    return decl_result + " " + inv_result;
   }
 
 
