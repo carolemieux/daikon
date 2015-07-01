@@ -720,10 +720,20 @@ public abstract class CLASSNAME extends SUPERCLASS {
     public String get_format_str (OutputFormat format) {
       if (format == OutputFormat.SIMPLIFY)
         return ("(EQ 0 (MOD %var1% %var2%))");
+      else if (format == OutputFormat.SMTLIBV2) {
+        #if defined(TYPELONG)
+        return ("decl: (declare-const %var1% Int) (declare-const %var2% Int) inv: (= 0 (mod %var1% %var2%))");
+        #elif defined(TYPEDOUBLE)
+        return ("decl: (declare-const %var1% Real) (declare-const %var2% Real) inv: (= 0 (mod %var1% %var2%))");
+        #elif defined(TYPELONGSEQ)
+        return ("decl: (declare-const %var1% (Array Int Int)) (declare-const %var2% (Array Int Int)) inv: (forall ((i Int)) (= 0 (mod (select %var1% i) (select %var2% i))))");
+        #elif defined(TYPEDOUBLESEQ)
+        return ("decl: (declare-const %var1% (Array Int Real)) (declare-const %var2% (Array Int Real)) inv: (forall ((i Int)) (= 0 (mod (select %var1% i) (select %var2% i))))");
+        #endif
+      }
       else if (format == OutputFormat.CSHARPCONTRACT)
         return ("%var1% % %var2% == 0");
       else
-
         #if defined(TYPEDOUBLE)
         if (format.isJavaFamily()) {
           return "daikon.Quant.fuzzy.eq(%var1% % %var2%, 0)";
@@ -914,6 +924,17 @@ public abstract class CLASSNAME extends SUPERCLASS {
         return ("(EQ %var1% (* %var2% %var2))");
       else if (format == OutputFormat.CSHARPCONTRACT)
         return "%var1% == %var2%*%var2%";
+      else if (format == OutputFormat.SMTLIBV2) {
+        #if defined(TYPELONG)
+        return ("decl: (declare-const %var1% Int) (declare-const %var2% Int) inv: (= %var1% (* %var2% %var2%))");
+        #elif defined(TYPEDOUBLE)
+        return ("decl: (declare-const %var1% Real) (declare-const %var2% Real) inv: (= %var1% (* %var2% %var2%))");
+        #elif defined(TYPELONGSEQ)
+        return ("decl: (declare-const %var1% (Array Int Int)) (declare-const %var2% (Array Int Int)) inv: (forall ((i Int)) (= (select %var1% i) (* (select %var2% i) (select %var2% i))))");
+        #elif defined(TYPEDOUBLESEQ)
+        return ("decl: (declare-const %var1% (Array Int Real)) (declare-const %var2% (Array Int Real)) inv: (forall ((i Int)) (= (select %var1% i) (* (select %var2% i) (select %var2% i))))");
+        #endif
+      }
       else if (format.isJavaFamily()) {
         #if defined(TYPEDOUBLE)
         return ("daikon.Quant.fuzzy.eq(%var1%, %var2%*%var2%)");
@@ -988,7 +1009,17 @@ public abstract class CLASSNAME extends SUPERCLASS {
     public String get_format_str (OutputFormat format) {
       if (format == OutputFormat.SIMPLIFY) {
         return ("(IMPLIES (EQ %var1% 0) (EQ %var2% 0))");
-      } else if (format.isJavaFamily() || format == OutputFormat.CSHARPCONTRACT) {
+      } else if (format == OutputFormat.SMTLIBV2) {
+        #if defined(TYPELONG)
+        return ("decl: (declare-const %var1% Int) (declare-const %var2% Int) inv: (implies (= %var1% 0) (= %var2% 0))");
+        #elif defined(TYPEDOUBLE)
+        return ("decl: (declare-const %var1% Real) (declare-const %var2% Real) inv: (implies (= %var1% 0) (= %var2% 0))");
+        #elif defined(TYPELONGSEQ)
+        return ("decl: (declare-const %var1% (Array Int Int)) (declare-const %var2% (Array Int Int)) inv: (forall ((i Int)) (implies (= (select %var2% i) 0) (= (select %var2% i) 0)))");  
+        #elif defined(TYPEDOUBLESEQ)
+        return ("decl: (declare-const %var1% (Array Int Real)) (declare-const %var2% (Array Int Real)) inv: (forall ((i Int)) (implies (= (select %var2% i) 0) (= (select %var2% i) 0)))");
+        #endif
+       } else if (format.isJavaFamily() || format == OutputFormat.CSHARPCONTRACT) {
         return ("(!(%var1% == 0)) || (%var2% == 0)");
       } else {
         return ("(%var1% == 0) ==> (%var2% == 0)");
@@ -1071,11 +1102,14 @@ public abstract class CLASSNAME extends SUPERCLASS {
       return (true);
     }
 
+    // TODO: implement BitwiseComplement for SMTLIBV2
     public String get_format_str (OutputFormat format) {
       if (format == OutputFormat.SIMPLIFY)
         return ("(EQ %var1% (~ %var2%))");
       else if (format == OutputFormat.CSHARPCONTRACT)
         return "%var1% == ~%var2%";
+      else if (format == OutputFormat.SMTLIBV2)
+        return "NOT YET IMPLEMENTED";
       else
         #if defined(TYPEDOUBLE)
         if (format.isJavaFamily()) {
@@ -1133,11 +1167,14 @@ public abstract class CLASSNAME extends SUPERCLASS {
       return new BitwiseSubset (slice, swap);
     }
 
+    // TODO: update with SMTLIBV2; may need to define custom functions
     public String get_format_str (OutputFormat format) {
       if (format == OutputFormat.SIMPLIFY)
         return ("(EQ %var1% (|java-bitwise-or| %var2% %var1%))");
       else if (format == OutputFormat.DAIKON)
         return ("%var2% is a bitwise subset of %var1%");
+      else if (format == OutputFormat.SMTLIBV2)
+        return "NOT YET IMPLEMENTED";
       else if (format == OutputFormat.CSHARPCONTRACT)
         return "%var1% == (%var2% | %var1%)";
       else
@@ -1235,11 +1272,14 @@ public abstract class CLASSNAME extends SUPERCLASS {
       return new BitwiseAndZero (slice);
     }
 
+    // TODO: update with SMTLIBV2, may need to define custom function
     public String get_format_str (OutputFormat format) {
       if (format == OutputFormat.SIMPLIFY)
         return ("(EQ (|java-&| %var1% %var2%) 0)");
       else if (format == OutputFormat.CSHARPCONTRACT)
         return ("(%var1% & %var2%) == 0");
+      else if (format == OutputFormat.SMTLIBV2)
+        return "NOT YET IMPLEMENTED";
       else
         #if defined(TYPEDOUBLE)
         if (format.isJavaFamily()) {
@@ -1326,11 +1366,14 @@ public abstract class CLASSNAME extends SUPERCLASS {
       return new ShiftZero (slice, swap);
     }
 
+    // TODO: update with SMTLIBV2; may need to define custom function
     public String get_format_str (OutputFormat format) {
       if (format == OutputFormat.SIMPLIFY)
         return ("(EQ (|java->>| %var1% %var2%) 0)");
       else if (format == OutputFormat.CSHARPCONTRACT)
         return ("(%var1% >> %var2% == 0)");
+      else if (format == OutputFormat.SMTLIBV2)
+        return "NOT YET IMPLEMENTED";
       else
         #if defined(TYPEDOUBLE)
         if (format.isJavaFamily()) {

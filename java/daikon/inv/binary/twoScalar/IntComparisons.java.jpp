@@ -18,6 +18,7 @@
 
 #if (defined(EQUAL) || defined(NONEQUAL) || defined(LESSTHAN) \
     || defined(LESSEQUAL) || defined(GREATERTHAN) || defined(GREATEREQUAL))
+  #define SCALAR
   #define PRIMITIVE long
   #define PRIMITIVENONCOMMENT long
   #define IS_NUMERIC 1
@@ -40,6 +41,7 @@
 #elif (defined (EQUALFLOAT) || defined(NONEQUALFLOAT) \
     || defined(LESSTHANFLOAT) || defined(LESSEQUALFLOAT) \
     || defined(GREATERTHANFLOAT) || defined(GREATEREQUALFLOAT))
+  #define FLOAT
   #define IS_NUMERIC 1
   #define IS_FLOAT 1
   #define PRIMITIVE double
@@ -60,6 +62,7 @@
   #define GREATER_THAN_CLASS FloatGreaterThan
   #define EQUAL_CLASS FloatEqual
 #else
+  #define STRING
   #define IS_STRING 1
   #define PRIMITIVE /*@Interned*/ String
   #define PRIMITIVENONCOMMENT String
@@ -724,7 +727,27 @@ public final class INTEQUAL
         + " " + var1().simplifyFixup(var1name)
         + " " + var2().simplifyFixup(var2name) + ")";
     }
-
+  
+    // TODO: check if it is viable to use <, <=, etc. on a newly defined sort (String)
+    if (format == OutputFormat.SMTLIBV2) {
+      #if defined(SCALAR)
+        String sort = "Int";
+      #elif defined(FLOAT)
+        String sort = "Real";
+      #elif defined(STRING)
+        String sort = "String";
+      #endif
+      #if defined(EQUAL_OP)
+        String comparator = "=";
+      #elif defined(NONEQUAL_OP)
+        String comparator = "!=";
+      #else
+        String comparator = EQUALSstring;
+      #endif
+      return "decl: (declare-const " + var1().smtlibv2_name() + " " + sort + ") (declare-const " + var2().smtlibv2_name() + " " + sort + ") inv: (" + comparator
+        + " " + var1().smtlibv2_name()
+        + " " + var2().smtlibv2_name() + ")";
+    }
     return format_unimplemented(format);
   }
 

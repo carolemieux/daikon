@@ -528,6 +528,12 @@ public final class CLASSNAME
       return format_simplify(vix, viy, u, v,
                              w);
     }
+
+    if (format == OutputFormat.SMTLIBV2) {
+      return format_smtlibv2(vix, viy, u, v,
+                             w);
+    }
+
     throw new Error("Unknown OutputFormat: " + format);
   }
 
@@ -561,6 +567,41 @@ public final class CLASSNAME
       String str_axpc = (c == 0.0) ? str_axby : "(+ " + str_axby + " " + str_c + ")";
 
       return "(EQ 0 " + str_axpc + ")";
+  }
+
+  public static String format_smtlibv2(String str_x, String str_y,
+                                       double a, double b, double c) {
+
+      int ia = (int) a;
+      int ib = (int) b;
+      int ic = (int) c;
+
+      //TODO:update formats to SMTLIBV2 formats instead of simplify formats
+      String str_a, str_b, str_c;
+      if (ia == a && ib == b && ic == c) {
+        // integer
+        str_a = Invariant.simplify_format_long(ia);
+        str_b = Invariant.simplify_format_long(ib);
+        str_c = Invariant.simplify_format_long(ic);
+      } else {
+        // floating point; probably not very useful
+        str_a = Invariant.simplify_format_double(a);
+        str_b = Invariant.simplify_format_double(b);
+        str_c = Invariant.simplify_format_double(c);
+      }
+
+      // ax + by + c = 0
+
+      String str_ax = (a == 1.0) ? str_x : "(* " + str_a + " " + str_x + ")";
+      String str_by = (b == 1.0) ? str_y : "(* " + str_b + " " + str_y + ")";
+      String str_axby = "(+ " +  str_ax + " " + str_by + ")";
+      String str_axpc = (c == 0.0) ? str_axby : "(+ " + str_axby + " " + str_c + ")";
+      
+      #if defined(TYPELONG)
+      return "decl: (declare-const " + str_x + " Int) (declare-const " + str_y + " Int)" + "inv: (= 0 " + str_axpc + ")";
+      #else
+      return "decl: (declare-const " + str_x + " Real) (declare-const " + str_y + " Real)" + "inv: (= 0 " + str_axpc + ")";
+      #endif
   }
 
   /*@SideEffectFree*/ public String format_using(OutputFormat format, String xname, String yname) {

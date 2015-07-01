@@ -1238,6 +1238,59 @@ public final class CLASSNAME
     return "(EQ 0 " + str_axPbyPczPd + ")";
   }
 
+
+
+
+
+  public static String format_smtlibv2 (String vix, String viy, String viz,
+                                       double da, double db, double dc, double dd) {
+    int ia = (int) da;
+    int ib = (int) db;
+    int ic = (int) dc;
+    int id = (int) dd;
+
+    String str_a, str_b, str_c, str_d;
+    if (ia != da || ib != db || ic != dc || id != dd) {
+      // floating point
+
+      // Disabled for the moment, since mixing integers and floating
+      // literals seems to give Simplify indigestion. For instance:
+      // (BG_PUSH (<= w 3))
+      // (BG_PUSH (EQ 0 (* w 2.0d0)))
+      // (<= w 1)
+
+      // str_a = Invariant.simplify_format_double(da);
+      // str_b = Invariant.simplify_format_double(db);
+      // str_c = Invariant.simplify_format_double(dc);
+      // str_d = Invariant.simplify_format_double(dd);
+      return "(AND)"; // really s/b format_unimplemented
+    } else {
+      // integer TODO: update to SMTLIBV2 format, don't think it makes a huge difference
+      str_a = Invariant.simplify_format_long(ia);
+      str_b = Invariant.simplify_format_long(ib);
+      str_c = Invariant.simplify_format_long(ic);
+      str_d = Invariant.simplify_format_long(id);
+    }
+
+    #if (defined(TYPELONG))
+    String sort = "Int";
+    #else
+    String sort = "Real";
+    #endif
+
+    String str_z = viz;
+    String str_x = vix;
+    String str_y = viy;
+    String str_ax = (da == 1.0) ? str_x : "(* " + str_a + " " + str_x + ")";
+    String str_by = (db == 1.0) ? str_y : "(* " + str_b + " " + str_y + ")";
+    String str_cz = (dc == 1.0) ? str_z : "(* " + str_c + " " + str_z + ")";
+    String str_axPbyPcz = "(+ " + str_ax + " " + str_by + " " + str_cz + ")";
+    String str_axPbyPczPd = (dd == 0.0) ? str_axPbyPcz :
+      "(+ " + str_axPbyPcz + " " + str_d + ")";
+    return 
+      "decl: (declare-const " + str_x + " " + sort + ") (declare-const " + str_y + " " + sort + ") (declare-const " + str_z + ") inv: (= 0 " + str_axPbyPczPd + ")";
+  }
+
   /*@SideEffectFree*/ public String format_using(OutputFormat format,
                              String vix, String viy, String viz
                              ) {
@@ -1248,6 +1301,7 @@ public final class CLASSNAME
 
     return wrapper.format_unimplemented(format);
   }
+
 
 
   // // Format as "x = cy+d" instead of as "y = ax+b".
