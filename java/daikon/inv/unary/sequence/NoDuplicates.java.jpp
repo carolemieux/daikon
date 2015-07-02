@@ -150,7 +150,7 @@ public class CLASSNAME
   #elif defined(TYPEDOUBLE)
     String sort = "Real";
   #endif
-    return "decl: (declare-const " + var().smtlibv2_name() + " (Array Int " + sort + ")) inv: (forall ((i Int) (j Int)) (implies (and (>= i 0) (<= i (arrayLength " + var().smtlibv2_name() + ")) (>= j 0) (<= j (arrayLength " + var().smtlibv2_name() + "))) (!= (select " + var().smtlibv2_name() + " i) (select " + var().smtlibv2_name() + " j))))"; 
+    return "decl: (declare-const " + var().smtlibv2_name() + " (Array Int " + sort + ")) inv: (forall ((i Int) (j Int)) (implies (and (>= i 0) (< i (arrayLength " + var().smtlibv2_name() + ")) (>= j 0) (<= j (arrayLength " + var().smtlibv2_name() + "))) (!= (select " + var().smtlibv2_name() + " i) (select " + var().smtlibv2_name() + " j))))"; 
   }
 
   public String format_java_family(OutputFormat format) {

@@ -1447,14 +1447,14 @@ public String format_smtlibv2() {
       #if defined(STRING)
       inv_result = "inv: (or" + inv_result + ")";
       #else
-      inv_result = "inv: (forall ((i Int)) (or" + inv_result + "))";
+      inv_result = "inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength " + varname + ")) (or" + inv_result + ")))";
       #endif
     } else if (num_elts == 1) {
       // chop leading space
       #if defined(STRING)
       inv_result = "inv:" + inv_result + ")";
       #else
-      inv_result = "inv: (forall ((i Int))" + inv_result + ")";
+      inv_result = "inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength " + varname + ")) " + inv_result + "))";
       #endif
     } else if (num_elts == 0) {
       return format_too_few_samples(OutputFormat.SIMPLIFY, null);
@@ -1472,7 +1472,7 @@ public String format_smtlibv2() {
       #if defined(SCALAR)
       inv_result = "inv: (= " + varname + " " + ((elts[0] == 0) ? "false" : "true") + ")";
       #else
-      inv_result = "inv: (forall ((i Int)) (= (select " + varname + " i) " + ((elts[0] == 0) ? "false" : "true") + "))";
+      inv_result = "inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength " + varname + ")) (= (select " + varname + " i) " + ((elts[0] == 0) ? "false" : "true") + ")))";
       #endif
     } else if (is_hashcode()) {
       // TODO: also need to update hashcode value stuff. Using int for now
@@ -1490,7 +1490,7 @@ public String format_smtlibv2() {
         #if defined(SCALAR)
         inv_result = "inv: " + inv_result;
         #else
-        inv_result = "inv: (forall ((i Int)) " + inv_result + ")";
+        inv_result = "inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength " + varname + ")) " + inv_result + "))";
         #endif
       } else if (num_elts == 2) {
         // add_modified allows two elements iff one is null
@@ -1502,7 +1502,7 @@ public String format_smtlibv2() {
         #if defined(SCALAR)
         inv_result = "inv: " + inv_result;
         #else
-        inv_result = "inv: (forall ((i Int)) " + inv_result + ")";
+        inv_result = "inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength " + varname + ")) " + inv_result + "))";
         #endif
       } else if (num_elts == 0) {
         return format_too_few_samples(OutputFormat.SIMPLIFY, null);
@@ -1527,13 +1527,13 @@ public String format_smtlibv2() {
         #if defined(SCALAR)
         inv_result = "inv: (or" + inv_result +")";
         #else
-        inv_result = "inv: (forall ((i Int)) (or" + inv_result + "))";
+        inv_result = "inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength " + varname + ")) (or" + inv_result + ")))";
         #endif
       } else if (num_elts == 1) {
         #if defined(SCALAR)
         inv_result = "inv:" + inv_result;
         #else
-        inv_result = "inv: (forall ((i Int))" + inv_result + ")";
+        inv_result = "inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength " + varname + "))" + inv_result + "))";
         #endif
       } else {
         // Haven't actually seen any data, so we're vacuously true

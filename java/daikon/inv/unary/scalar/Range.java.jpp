@@ -296,7 +296,7 @@ public abstract class RANGE extends SUPERCLASS {
         String sort = "Real";
         #endif
         #if defined(SEQ)
-        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (= 0 (select %var1% i)))";
+        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength %var1%))) (= 0 (select %var1% i))))";
         #else
         return "decl: (declare-const %var1% " + sort + ") inv: (= 0 %var1%)";
         #endif
@@ -357,7 +357,7 @@ public abstract class RANGE extends SUPERCLASS {
         String sort = "Real";
         #endif
         #if defined(SEQ)
-        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (= 1 (select %var1% i)))";
+        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength %var1%))) (= 1 (select %var1% i))))";
         #else
         return "decl: (declare-const %var1% " + sort + ") inv: (= 1 %var1%)";
         #endif
@@ -418,7 +418,7 @@ public abstract class RANGE extends SUPERCLASS {
         String sort = "Real";
         #endif
         #if defined(SEQ)
-        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (= -1 (select %var1% i)))";
+        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength %var1%))) (= -1 (select %var1% i))))";
         #else
         return "decl: (declare-const %var1% " + sort + ") inv: (= -1 %var1%)";
         #endif
@@ -479,7 +479,7 @@ public abstract class RANGE extends SUPERCLASS {
         String sort = "Real";
         #endif
         #if defined(SEQ)
-        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (>= (select %var1% i) 0))";
+        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength %var1%))) (>= (select %var1% i) 0)))";
         #else
         return "decl: (declare-const %var1% " + sort + ") inv: (>= %var1% 0)";
         #endif
@@ -540,7 +540,7 @@ public abstract class RANGE extends SUPERCLASS {
         String sort = "Real";
         #endif
         #if defined(SEQ)
-        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (>= (select %var1% i) 64))";
+        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength %var1%))) (>= (select %var1% i) 64)))";
         #else
         return "decl: (declare-const %var1% " + sort + ") inv: (>= %var1% 64)";
         #endif
@@ -602,7 +602,7 @@ public abstract class RANGE extends SUPERCLASS {
         String sort = "Real";
         #endif
         #if defined(SEQ)
-        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (or (= (select %var1% i) 0) (= (select %var1% i) 1)))";
+        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength %var1%))) (or (= (select %var1% i) 0) (= (select %var1% i) 1))))";
         #else
         return "decl: (declare-const %var1% " + sort + ") inv: (or (= %var1% 0) (= %var1% 1))";
         #endif
@@ -747,7 +747,7 @@ public abstract class RANGE extends SUPERCLASS {
         String sort = "Real";
         #endif
         #if defined(SEQ)
-        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (= (mod (select %var1% i) 2) 0))";
+        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength %var1%))) (= (mod (select %var1% i) 2) 0)))";
         #else
         return "decl: (declare-const %var1% " + sort + ") inv: (= (mod %var1% 2) 0)";
         #endif
@@ -824,7 +824,7 @@ public abstract class RANGE extends SUPERCLASS {
         String sort = "Real";
         #endif
         #if defined(SEQ)
-        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int))  (>= 63 (select %var1% i) 0))";
+        return "decl: (declare-const %var1% (Array Int " + sort + ")) inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength %var1%))) (>= 63 (select %var1% i) 0)))";
         #else
         return "decl: (declare-const %var1% " + sort + ") inv: (>= 63 %var1% 0)";
         #endif
