@@ -122,6 +122,10 @@ public class CLASSNAME
       return format_simplify();
     }
 
+    if (format == OutputFormat.SMTLIBV2) {
+      return format_smtlibv2();
+    }
+
     if (format.isJavaFamily()) {
       return format_java_family(format);
     }
@@ -138,6 +142,15 @@ public class CLASSNAME
                                                var());
     return form[0] + "(NEQ " + form[1] + " " + form[2] + ")"
       + form[3];
+  }
+
+  public String format_smtlibv2() {
+  #if defined(TYPELONG)
+    String sort = "Int";
+  #elif defined(TYPEDOUBLE)
+    String sort = "Real";
+  #endif
+    return "decl: (declare-const " + var().smtlibv2_name() + " (Array Int " + sort + ")) inv: (forall ((i Int) (j Int)) (implies (and (>= i 0) (<= i (arrayLength " + var().smtlibv2_name() + ")) (>= j 0) (<= j (arrayLength " + var().smtlibv2_name() + "))) (!= (select " + var().smtlibv2_name() + " i) (select " + var().smtlibv2_name() + " j))))"; 
   }
 
   public String format_java_family(OutputFormat format) {

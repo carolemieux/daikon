@@ -376,6 +376,8 @@ public class LOWERBOUND
       return format_daikon();
     } else if (format == OutputFormat.SIMPLIFY) {
       return format_simplify();
+    } else if (format == OutputFormat.SMTLIBV2) {
+      return format_smtlibv2();
     } else if (format == OutputFormat.ESCJAVA) {
       return format_esc();
     } else if (format == OutputFormat.CSHARPCONTRACT) {
@@ -559,6 +561,25 @@ public class LOWERBOUND
     return "(" + GTESTR + " " + varname + " " + value + ")";
 #endif
   }
+
+
+  public String format_smtlibv2() {
+#ifdef BASE_FLOAT
+    String sort = "Real";
+#else
+    String sort = "Int";
+#endif
+#ifdef IS_ELT
+    String name = var().smtlibv2_name();
+    String name_select = "(select " + name + " i)";
+    return "decl: (declare-const " + name + " (Array Int " + sort + ")) inv: (forall ((i Int)) (" + GTESTR + " " + name_select + " " + MIN1 + ")";
+#else
+    String varname = var().smtlibv2_name();
+    return "decl: (declare-contst " + varname + " " + sort +") inv: (" + GTESTR + " " + varname + " " + MIN1 + ")";
+#endif
+  }
+
+
 
 #endif
 

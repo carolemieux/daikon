@@ -144,6 +144,7 @@ public final class CLASSNAME
     if (format == OutputFormat.ESCJAVA) return format_esc();
     if (format == OutputFormat.CSHARPCONTRACT) return format_csharp_contract();
     if (format == OutputFormat.SIMPLIFY) return format_simplify();
+    if (format == OutputFormat.SMTLIBV2) return format_smtlibv2();
 
     return format_unimplemented(format);
   }
@@ -212,6 +213,16 @@ public final class CLASSNAME
     return form[0] + "(NEQ " + form[1] + " "
       + (is_pointer() ? "null" : "0") + ")" + form[2];
   }
+
+  public String format_smtlibv2() {
+   #if defined(TYPELONG)
+    String sort = "Int";
+   #else
+    String sort = "Real";
+   #endif
+    return "decl: (declare-const " + var().smtlibv2_name() + " (Array Int " + sort + ")) inv: (forall ((i Int)) (implies (and (>= i 0) (<= i (arrayLength " + var().smtlibv2_name() + "))) (!= (select "+ var().smtlibv2_name() +" i) " +  (is_pointer() ? "null" : "0") + ")))";
+  }
+
 
   public InvariantStatus check_modified(PRIMITIVE /*@Interned*/ [] a, int count) {
     for (int ai=0; ai<a.length; ai++) {

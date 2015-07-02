@@ -179,6 +179,15 @@ public class NONZERO
       return "(NEQ " + var().simplifyFixup(name) + " " + zero(format) + ")";
     }
 
+    if (format == OutputFormat.SMTLIBV2) {
+    #if defined(SCALAR)
+      String sort = "Int";
+    #else
+      String sort = "Real";
+    #endif
+      return "decl: (declare-const " + var().smtlibv2_name() + " " + sort + ") inv: (!= " + var().smtlibv2_name() + " " + zero(format) + ")";
+    }
+
     return format_unimplemented(format);
   }
 

@@ -1407,10 +1407,10 @@ public String format_smtlibv2() {
 #ifdef BASE_INT
      // TODO: dkconfig...Simplify should be updated
      if (is_hashcode() && dkconfig_omit_hashcode_values_Simplify)
-       return "(AND)";
+       return "(and)";
 #endif
     sort_rep();
-    String varname = var().name_using(OutputFormat.SMTLIBV2);
+    String varname = var().smtlibv2_name();
     String decl_result;
     String inv_result;
 #if defined(STRING) || defined(ELTSTRING)

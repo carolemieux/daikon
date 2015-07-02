@@ -1156,6 +1156,11 @@ public final class CLASSNAME
       return format_simplify(vix, viy, viz, a, b, c, d);
     }
 
+    if (format == OutputFormat.SMTLIBV2) {
+      return format_smtlibv2(vix, viy, viz, a, b, c, d);
+    }
+
+
     if ((format.isJavaFamily()))
       {
       #if defined(TYPEDOUBLE)

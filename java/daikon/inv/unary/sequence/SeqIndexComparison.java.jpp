@@ -5,6 +5,7 @@
 #endif
 
 #if (defined(EQUAL) || defined(NONEQUAL) || defined(LESSTHAN) || defined(LESSEQUAL) || defined(GREATERTHAN) || defined(GREATEREQUAL))
+  #define SCALAR
   #define SUPERCLASS SingleScalarSequence
   #define PRIMITIVE long
   #define DOUBLE_CAST(x) (double)(x)
@@ -18,6 +19,7 @@
   #define VALUE_SET ValueSet.ValueSetScalarArray
   #define SUBSEQUENCE SubSequence
 #elif defined(EQUALFLOAT) || defined(NONEQUALFLOAT) || defined(LESSTHANFLOAT) || defined(LESSEQUALFLOAT) || defined(GREATERTHANFLOAT) || defined(GREATEREQUALFLOAT)
+  #define FLOAT
   #define SUPERCLASS SingleFloatSequence
   #define PRIMITIVE double
   #define DOUBLE_CAST(x) (x)
@@ -296,6 +298,8 @@ public class CLASSNAME extends SUPERCLASS {
     if (format == OutputFormat.ESCJAVA) return format_esc();
     if (format == OutputFormat.CSHARPCONTRACT) return format_csharp_contract();
     if (format == OutputFormat.SIMPLIFY) return format_simplify();
+    if (format == OutputFormat.SMTLIBV2) return format_smtlibv2();
+
 
     return format_unimplemented(format);
   }
@@ -331,6 +335,16 @@ public class CLASSNAME extends SUPERCLASS {
                                                var());
     return form[0] + "(" + EQUALSSIMPLIFYstring + " " + form[1] + " " + form[2] + ")"
       + form[3];
+  }
+
+  public String format_smtlibv2() {
+    #if defined(SCALAR)
+    String sort = "Int";
+    #else
+    String sort = "Real";
+    #endif
+    String length = "(arrayLength " + var().smtlibv2_name() + ")";
+    return "decl: (declare-const " + var().smtlibv2_name() + " (Array Int " + sort + ")) inv: (forall ((i Int)) (implies (and (>= i 0) (<= i " + length + ")) (" + EQUALSstring + " (select " + var().smtlibv2_name() + " i) i)))";
   }
 
   public InvariantStatus check_modified(PRIMITIVE /*@Interned*/ [] a, int count) {
