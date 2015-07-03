@@ -54,6 +54,16 @@ public class AndJoiner
       return "(" + UtilMDE.join(invStrings, ") && (") + ")";
     } else if (format == OutputFormat.SIMPLIFY) {
       return "(AND" + UtilMDE.join(invStrings, " ") + ")";
+    } else if (format == OutputFormat.SMTLIBV2) {
+      // have to do some messing around due to the decl: inv: format. VERY 
+      // RELIANT on that format being outputted everywhere else
+      String inv_part = "(and" + UtilMDE.join(invStrings, " ") + ")";
+      inv_part = inv_part.replaceAll("(decl: )(.*?)( inv: )", " ");
+      String decl_part = UtilMDE.join(invStrings, " ");
+      decl_part = decl_part.replaceAll("( inv: )(.*?)( decl: )", " ");
+      decl_part = decl_part.substring(0,decl_part.indexOf(" inv: "));
+      // note the first decl: was retained in decl_part
+      return decl_part + " inv: " + inv_part;
     } else {
       return format_unimplemented(format);
     }

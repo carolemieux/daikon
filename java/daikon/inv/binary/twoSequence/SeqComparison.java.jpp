@@ -411,7 +411,6 @@ public class SEQSEQINTEQUAL
 
     }
 
-
     if (format.isJavaFamily()) {
       String name1 = var1().name_using(format);
       String name2 = var2().name_using(format);

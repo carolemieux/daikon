@@ -1463,9 +1463,9 @@ public String format_smtlibv2() {
   #if defined(SCALAR) || defined(ELT)
     if (is_boolean()) {
       #if defined(SCALAR)
-      decl_result = "decl: (declare-constant " + varname + " Bool)";
+      decl_result = "decl: (declare-const " + varname + " Bool)";
       #else
-      decl_result = "decl: (declare-constant " + varname + " (Array Int Bool))";
+      decl_result = "decl: (declare-const " + varname + " (Array Int Bool))";
       #endif
       assert num_elts == 1;
       assert (elts[0] == 0) || (elts[0] == 1);
@@ -1477,9 +1477,9 @@ public String format_smtlibv2() {
     } else if (is_hashcode()) {
       // TODO: also need to update hashcode value stuff. Using int for now
       #if defined(SCALAR)
-      decl_result = "decl: (declare-constant " + varname + " Int)";
+      decl_result = "decl: (declare-const " + varname + " Int)";
       #else
-      decl_result = "decl: (declare-constant " + varname + " (Array Int Int))";
+      decl_result = "decl: (declare-const " + varname + " (Array Int Int))";
       varname = "(select " + varname + " i)";
       #endif
       if (num_elts == 1) {
@@ -1513,9 +1513,9 @@ public String format_smtlibv2() {
   #endif
     {
       #if defined(SCALAR)
-      decl_result = "decl: (declare-constant " + varname + " Int)";
+      decl_result = "decl: (declare-const " + varname + " Int)";
       #else
-      decl_result = "decl: (declare-constant " + varname + " (Array Int Int))";
+      decl_result = "decl: (declare-const " + varname + " (Array Int Int))";
       varname = "(select " + varname + " i)";
       #endif
       inv_result = "";

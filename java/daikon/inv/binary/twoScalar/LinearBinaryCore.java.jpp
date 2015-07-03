@@ -598,9 +598,9 @@ public final class CLASSNAME
       String str_axpc = (c == 0.0) ? str_axby : "(+ " + str_axby + " " + str_c + ")";
       
       #if defined(TYPELONG)
-      return "decl: (declare-const " + str_x + " Int) (declare-const " + str_y + " Int)" + "inv: (= 0 " + str_axpc + ")";
+      return "decl: (declare-const " + str_x + " Int) (declare-const " + str_y + " Int) inv: (= 0 " + str_axpc + ")";
       #else
-      return "decl: (declare-const " + str_x + " Real) (declare-const " + str_y + " Real)" + "inv: (= 0 " + str_axpc + ")";
+      return "decl: (declare-const " + str_x + " Real) (declare-const " + str_y + " Real) inv: (= 0 " + str_axpc + ")";
       #endif
   }
 

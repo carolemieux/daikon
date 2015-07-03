@@ -192,6 +192,8 @@ public final /*(at)Interned*/ class Equality
     // changes are also necessary.
     // if (format == OutputFormat.JAVA_IDENTIFIER) return format_java();
     if (format == OutputFormat.SIMPLIFY) return format_simplify();
+    // TODO: SMTLIBV2 format. not urgent fo rmy use, but will need to be done
+    // if everything is converted to z3. 
     return format_unimplemented(format);
   }
 
