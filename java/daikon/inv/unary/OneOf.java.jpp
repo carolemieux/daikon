@@ -1403,6 +1403,19 @@ public String format_csharp_contract() {
     return result;
   }
 
+// **************************************************************************
+// **************************************************************************
+// **************************************************************************
+// **************************************************************************
+// **************************************************************************
+// **************************************************************************
+// **************************************************************************
+// **************************************************************************
+// **************************************************************************
+// **************************************************************************
+// **************************************************************************
+// **************************************************************************
+// **************************************************************************
 public String format_smtlibv2() {
 #ifdef BASE_INT
      // TODO: dkconfig...Simplify should be updated
@@ -1540,10 +1553,133 @@ public String format_smtlibv2() {
         return format_too_few_samples(OutputFormat.SIMPLIFY, null);
       }
     }
-#elif defined(IS_SEQUENCE) 
-    // TODO: update to actually work
-    decl_result= "format_smtlibv2() failed on a weird OneOf";
-    inv_result = "";
+#elif defined(IS_SEQUENCE)
+    // Note: this whole section needs some qork. Hacked stuff so it works for me for the moment
+    #if defined(SEQUENCE)
+    decl_result = "decl: (declare-const " + var().smtlibv2_name() + " (Array Int Int))";
+    #elif defined(FLOATSEQUENCE)
+    decl_result = "decl: (declare-const " + var().smtlibv2_name() + " (Array Int Real))";    
+    #else
+    decl_result = "decl: (declare-const " + var().smtlibv2_name() + " (Array Int String))";
+    #endif
+    StringBuffer resultBuf = new StringBuffer();
+    for (int i=0; i<num_elts; i++) {
+      System.out.println("Does everyone go here?");
+      INT seq = elts[i];
+      String offset = null;
+      String contents = null;
+      String[] bounds_name;
+      String length = "(arrayLength " + var().smtlibv2_name() +")";
+      // if ((length == null) && var().name.isApplySizeSafe())
+      //  System.out.printf ("var %s, type %s, is_array %b%n", var().name(),
+      //                     var().type, var().type.isArray());
+      if (length != null) {
+        length = "(= " + length + " "+ simplify_format_long(seq.length) + ")";
+      } else if ((bounds_name = var().get_simplify_slice_bounds()) != null) {
+        String size = "(+ 1 (- " + bounds_name[1] +" " + bounds_name[0] + "))";
+        length = "(= " + size + " " + simplify_format_long(seq.length) + ")";
+        offset = bounds_name[0];
+      }
+      
+#ifdef SEQUENCE
+      if (is_hashcode()) {
+        System.out.println("Debug 1");
+        String[] form = VarInfo.simplify_quantify (var());
+        if (no_nulls(i)) {
+          contents = "(forall ((i Int)) (implies (and (>= i 0) (<= i " + length +")) (!= (select " + var().smtlibv2_name() + " i)  null)))";
+        } else if (all_nulls(i)) {
+          contents = "(forall ((i Int)) (implies (and (>= i 0) (<= i " + length +")) (= (select " + var().smtlibv2_name() + " i)  null)))";
+        }
+      } else
+#endif
+      {
+        StringBuffer contentsBuf = new StringBuffer();
+        for (int j = 0; j < seq.length; j++) {
+          System.out.println("hi???");
+          System.out.println(contentsBuf.toString());
+          if (j + 3 < seq.length &&
+              ELT_EQUALS(seq[j], seq[j+1]) &&
+              ELT_EQUALS(seq[j], seq[j+2]) &&
+              ELT_EQUALS(seq[j], seq[j+3])) {
+            // Compress a sequence of adjacent values
+            int k = j + 4;
+            for (; k < seq.length; k++)
+              if (!ELT_EQUALS(seq[j], seq[k]))
+                break;
+            k--;
+            String index_name = "i";
+            String cond_left, cond_right;
+            if (offset == null) {
+              cond_left  = "(<= " + j + " " + index_name + ")";
+              cond_right = "(<= " + index_name + " " + k + ")";
+            } else {
+              cond_left = "(<= (+ " + offset + " " + j + ") "
+                + index_name + ")";
+              cond_right = "(>= (+ " + offset + " " + k + ") "
+                + index_name + ")";
+            }
+            String cond = "(and " + cond_left + " " + cond_right + ")";
+            String nth = "(select " + var().smtlibv2_name() + " i)";
+            String eq = "(= " + nth + " " + seq[j] + ")";
+            String implies = "(implies " + cond + " " + eq + ")";
+            String forall = "(forall ((" + index_name + " Int)) " + implies + ")";
+            contentsBuf.append(" " + forall);
+            j = k;
+          } else {
+
+            // Output a single value
+            String nth = var().get_simplify_selectNth_lower (j);
+            if (nth == null) {
+              String classname = this.getClass().toString().substring(6);
+              inv_result = "warning: method " + classname
+                + ".format_simplify() needs to fix selectNth(): " + format();
+              return inv_result;
+            }
+            String value = TOSTRING_SIMPLIFY(seq[j]);
+            contentsBuf.append(" (= " + nth + " " + value + ")");
+            // if (nth.contains ("--orig__a"))
+            //   System.out.printf ("regular orig__a%n");
+
+          }
+        }
+        if (seq.length > 1) {
+          contents = "(and " + contentsBuf.toString() + ")";
+        } else if (seq.length == 1) {
+          contents = contentsBuf.toString().substring(1);
+        } else if (seq.length == 0) {
+          contents = null; // back from ""
+        }
+      }
+      System.out.println("Debug 2");
+      System.out.println(contents + " is this it?");
+      if (length == null && contents == null) {
+        resultBuf.append(" ");
+      } else if (length == null && contents != null) {
+        resultBuf.append(" " + contents);
+      } else if (length != null && contents == null) {
+        resultBuf.append(" " + length);
+      } else {
+        assert length != null && contents != null;
+        resultBuf.append(" (and " + length + " " + contents + ")");
+      }
+
+      }
+    if (num_elts > 1) {
+      System.out.println("Debug 3");
+      inv_result = "(or" + resultBuf.toString() + ")";
+    } else if (num_elts == 1) {
+      System.out.println("Debug 4");
+      // chop leading space
+      inv_result = resultBuf.toString().substring(1);
+    } else if (num_elts == 0) {
+      return format_too_few_samples(OutputFormat.SIMPLIFY, null);
+    } else {
+      throw new Error("this can't happen");
+      // inv_result = null;
+    }
+    if (inv_result.trim().equals(""))
+      inv_result = "format_simplify() failed on a weird OneOf";
+    inv_result = "inv: " + inv_result;
 #else
     String classname = this.getClass().toString().substring(6); // remove leading "class "
     return  "warning: method " + classname + ".format_smtlibv2() needs to be implemented: " + format();
