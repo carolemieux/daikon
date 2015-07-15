@@ -1478,14 +1478,15 @@ public String format_smtlibv2() {
       // TODO: also need to update hashcode value stuff. Using int for now
       #if defined(SCALAR)
       decl_result = "decl: (declare-const " + varname + " Int)";
+      String select_varname = varname;
       #else
       decl_result = "decl: (declare-const " + varname + " (Array Int Int))";
-      varname = "(select " + varname + " i)";
+      String select_varname = "(select " + varname + " i)";
       #endif
       if (num_elts == 1) {
         long hashcode_val = get_hashcode_val (elts[0]);
         // TODO: update this the hascode format for SMTLIBv2
-        inv_result = "(= " + varname + " " +
+        inv_result = "(= " + select_varname + " " +
           ((elts[0] == 0) ? "0" :
            (simplify_format_long(hashcode_val))) + ")";
         #if defined(SCALAR)
@@ -1498,7 +1499,7 @@ public String format_smtlibv2() {
         assert elts[0] == 0;
         assert elts[1] != 0;
         long hashcode_val = get_hashcode_val (elts[1]);
-        inv_result = "(or (EQ " + varname + " null) (EQ " + varname
+        inv_result = "(or (= " + varname + " null) (= " + varname
           + "(hashcode " + simplify_format_long(hashcode_val) + ")))";
         #if defined(SCALAR)
         inv_result = "inv: " + inv_result;
@@ -1515,14 +1516,15 @@ public String format_smtlibv2() {
     {
       #if defined(SCALAR)
       decl_result = "decl: (declare-const " + varname + " Int)";
+      String select_varname =  varname;
       #else
       decl_result = "decl: (declare-const " + varname + " (Array Int Int))";
-      varname = "(select " + varname + " i)";
+      String select_varname = "(select " + varname + " i)";
       #endif
       inv_result = "";
       for (int i=0; i<num_elts; i++) {
         //right now using TOSTRING_SIMPLIFY. should be edited for SMTLIB spec
-        inv_result += " (= " + varname + " " + TOSTRING_SIMPLIFY(elts[i]) + ")";
+        inv_result += " (= " + select_varname + " " + TOSTRING_SIMPLIFY(elts[i]) + ")";
       }
       if (num_elts > 1) {
         #if defined(SCALAR)
