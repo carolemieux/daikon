@@ -131,9 +131,13 @@ public class Implication
       String inv_part = "(" + cmp + " " + pred_fmt + " " + consq_fmt + ")";
       inv_part = inv_part.replaceAll("(decl: )(.*?)( inv: )", " ");
       inv_part = " inv: " + inv_part;
-      String first_decl = pred_fmt.substring(0,pred_fmt.indexOf(" inv: "));
-      String second_decl = consq_fmt.substring(5,consq_fmt.indexOf(" inv: "));
-      return first_decl + second_decl + inv_part;
+      try {
+         String first_decl = pred_fmt.substring(0,pred_fmt.indexOf(" inv: "));
+         String second_decl = consq_fmt.substring(5,consq_fmt.indexOf(" inv: "));
+         return first_decl + second_decl + inv_part;
+      } catch (StringIndexOutOfBoundsException e){
+    	  return "Not yet supported";
+      }
     } else if (format == OutputFormat.DBCJAVA) {
       if ( iff )
         return "((" + pred_fmt + ") == (" + consq_fmt + "))";

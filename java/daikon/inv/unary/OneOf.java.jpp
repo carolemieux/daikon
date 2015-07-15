@@ -1403,19 +1403,6 @@ public String format_csharp_contract() {
     return result;
   }
 
-// **************************************************************************
-// **************************************************************************
-// **************************************************************************
-// **************************************************************************
-// **************************************************************************
-// **************************************************************************
-// **************************************************************************
-// **************************************************************************
-// **************************************************************************
-// **************************************************************************
-// **************************************************************************
-// **************************************************************************
-// **************************************************************************
 public String format_smtlibv2() {
 #ifdef BASE_INT
      // TODO: dkconfig...Simplify should be updated
@@ -1497,9 +1484,10 @@ public String format_smtlibv2() {
       #endif
       if (num_elts == 1) {
         long hashcode_val = get_hashcode_val (elts[0]);
+        // TODO: update this the hascode format for SMTLIBv2
         inv_result = "(= " + varname + " " +
-          ((elts[0] == 0) ? "null" :
-           ("(hashcode " + simplify_format_long(hashcode_val) + ")")) + ")";
+          ((elts[0] == 0) ? "0" :
+           (simplify_format_long(hashcode_val))) + ")";
         #if defined(SCALAR)
         inv_result = "inv: " + inv_result;
         #else
@@ -1564,7 +1552,6 @@ public String format_smtlibv2() {
     #endif
     StringBuffer resultBuf = new StringBuffer();
     for (int i=0; i<num_elts; i++) {
-      System.out.println("Does everyone go here?");
       INT seq = elts[i];
       String offset = null;
       String contents = null;
@@ -1583,7 +1570,6 @@ public String format_smtlibv2() {
       
 #ifdef SEQUENCE
       if (is_hashcode()) {
-        System.out.println("Debug 1");
         String[] form = VarInfo.simplify_quantify (var());
         if (no_nulls(i)) {
           contents = "(forall ((i Int)) (implies (and (>= i 0) (<= i " + length +")) (!= (select " + var().smtlibv2_name() + " i)  null)))";
@@ -1595,8 +1581,6 @@ public String format_smtlibv2() {
       {
         StringBuffer contentsBuf = new StringBuffer();
         for (int j = 0; j < seq.length; j++) {
-          System.out.println("hi???");
-          System.out.println(contentsBuf.toString());
           if (j + 3 < seq.length &&
               ELT_EQUALS(seq[j], seq[j+1]) &&
               ELT_EQUALS(seq[j], seq[j+2]) &&
@@ -1650,8 +1634,6 @@ public String format_smtlibv2() {
           contents = null; // back from ""
         }
       }
-      System.out.println("Debug 2");
-      System.out.println(contents + " is this it?");
       if (length == null && contents == null) {
         resultBuf.append(" ");
       } else if (length == null && contents != null) {
@@ -1665,10 +1647,8 @@ public String format_smtlibv2() {
 
       }
     if (num_elts > 1) {
-      System.out.println("Debug 3");
       inv_result = "(or" + resultBuf.toString() + ")";
     } else if (num_elts == 1) {
-      System.out.println("Debug 4");
       // chop leading space
       inv_result = resultBuf.toString().substring(1);
     } else if (num_elts == 0) {
