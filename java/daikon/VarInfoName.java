@@ -262,11 +262,45 @@ public abstract /*@Interned*/ class VarInfoName
    * output format in either prestate or poststate context
    */
   protected abstract String simplify_name_impl(boolean prestate);
+  
+  
+
+  /**
+   * @return the string representation (interned) of this name, in the
+   * Simplify tool output format in the pre-state context.
+   **/
+  public /*@Interned*/ String smtlibv2_name() {
+    return smtlibv2_name(false);
+  }
+
+  /**
+   * @return the string representation (interned) of this name, in the
+   * Simplify tool output format, in the given pre/post-state context.
+   **/
+  protected /*@Interned*/ String smtlibv2_name(boolean prestate) {
+    int which = prestate ? 0 : 1;
+    if (smtlibv2_name_cached[which] == null) {
+      try {
+    	  smtlibv2_name_cached[which] = smtlibv2_name_impl(prestate).intern();
+      } catch (RuntimeException e) {
+        System.err.println("repr = " + repr());
+        throw e;
+      }
+    }
+    return simplify_name_cached[which];
+  }
+  private /*@Interned*/ String[] smtlibv2_name_cached
+    = new /*@Interned*/ String[2]; // each interned
+
+  /**
+   * Returns the String representation of this name in the smtlibv2
+   * output format in either prestate or poststate context
+   */
+  protected abstract String smtlibv2_name_impl(boolean prestate);
 
   /**
    * Return the String representation of this name in the java style
    * output format.
-   *
    * @return the string representation (interned) of this name, in the
    * java style output format
    **/
@@ -678,6 +712,28 @@ public abstract /*@Interned*/ class VarInfoName
       }
       return "|" + s + "|";
     }
+    
+    protected String smtlibv2_name_impl(boolean prestate) {
+        if (isLiteralConstant()) {
+          return name;
+        } else {
+          return smtlibv2_name_impl(name, prestate);
+        }
+      }
+      // Names must be either a legal C/Java style identifier, or
+      // surrounded by vertical bars (SMTLIB's quoting mechanism);
+      // other than that, they only have to be consistent within one
+      // execution of Daikon.
+      protected static String smtlibv2_name_impl(String s, boolean prestate) {
+        if (s.startsWith("~") && s.endsWith("~")) {
+          s = s.substring(1, s.length()-2) + ":closure";
+        }
+        if (prestate) {
+          s = "orig(" + s + ")";
+        }
+        return "|" + s + "|";
+      }
+    
     protected String java_name_impl(VarInfo v) {
       return "return".equals(name) ? "\\result" : name;
     }
@@ -855,6 +911,11 @@ public abstract /*@Interned*/ class VarInfoName
     protected String simplify_name_impl(boolean prestate) {
       return "(arrayLength " + get_term().simplify_name(prestate) + ")";
     }
+    
+    protected String smtlibv2_name_impl(boolean prestate) {
+      return "(arrayLength " + get_term().smtlibv2_name(prestate) + ")";
+    }
+    
     protected String java_name_impl(VarInfo v) {
       return java_family_impl(OutputFormat.JAVA, v);
     }
@@ -957,6 +1018,10 @@ public abstract /*@Interned*/ class VarInfoName
       return "(warning: format_simplify() needs to be implemented: " +
         function + " on " + argument.repr() + ")";
     }
+    protected String smtlibv2_name_impl(boolean prestate) {
+        return "(warning: format_smtlibv2() needs to be implemented: " +
+          function + " on " + argument.repr() + ")";
+      }
     protected String java_name_impl(VarInfo v) {
       return java_family_name_impl(OutputFormat.JAVA, v);
     }
@@ -1035,6 +1100,11 @@ public abstract /*@Interned*/ class VarInfoName
       return "(warning: format_simplify() needs to be implemented: " +
         function + " on " + elts_repr_commas() + ")";
     }
+    protected String smtlibv2_name_impl(boolean prestate) {
+        return "(warning: format_smtlibv2() needs to be implemented: " +
+          function + " on " + elts_repr_commas() + ")";
+      }
+
 
     protected String java_name_impl(VarInfo v) {
       return java_family_name_impl(OutputFormat.JAVA, v);
@@ -1176,6 +1246,17 @@ public abstract /*@Interned*/ class VarInfoName
       return "(select " + Simple.simplify_name_impl(field, false) + " "
         + term.simplify_name(prestate) + ")";
     }
+    protected String smtlibv2_name_impl(boolean prestate) { 
+    	String first = term.smtlibv2_name(prestate);
+    	if (first.startsWith("|") && first.endsWith("|")){
+    		first =first.substring(1, first.length()-2);
+    	}
+    	String second = Simple.smtlibv2_name_impl(field, false);
+    	if (second.startsWith("|") && second.endsWith("|")){
+    		second =second.substring(1, second.length()-2);
+    	}
+        return "|" + first + "."  + second + "|";
+     }
     protected String java_name_impl(VarInfo v) {
       return java_family_name(OutputFormat.JAVA, v);
     }
@@ -1425,6 +1506,9 @@ public abstract /*@Interned*/ class VarInfoName
     protected String simplify_name_impl(boolean prestate) {
       return term.simplify_name(true);
     }
+    protected String smtlibv2_name_impl(boolean prestate) {
+        return term.smtlibv2_name(true);
+      }
     protected String java_name_impl(VarInfo v) {
       if (PrintInvariants.dkconfig_replace_prestate) {
         return PrintInvariants.addPrestateExpression(term.java_name(v));
@@ -1510,6 +1594,9 @@ public abstract /*@Interned*/ class VarInfoName
     protected String simplify_name_impl(boolean prestate) {
       return term.simplify_name(false);
     }
+    protected String smtlibv2_name_impl(boolean prestate) { // TODO: must I add a new wrapper?
+        return term.smtlibv2_name(false);
+      }
     protected String java_name_impl(VarInfo v) {
       return "\\post(" + term.java_name(v) + ")";
     }
@@ -1572,6 +1659,11 @@ public abstract /*@Interned*/ class VarInfoName
       return (amount < 0) ?
         "(- " + term.simplify_name(prestate) + " " + (-amount) + ")" :
         "(+ " + term.simplify_name(prestate) + " " + amount + ")";
+    }
+    protected String smtlibv2_name_impl(boolean prestate) {
+        return (amount < 0) ?
+          "(- " + term.smtlibv2_name(prestate) + " " + (-amount) + ")" :
+          "(+ " + term.smtlibv2_name(prestate) + " " + amount + ")";
     }
     protected String java_name_impl(VarInfo v) {
       return term.java_name(v) + amount();
@@ -1797,6 +1889,10 @@ public abstract /*@Interned*/ class VarInfoName
       return "(select " + sequence.simplify_name(prestate) + " " +
         indexExplicit(sequence, index).simplify_name(prestate) + ")";
     }
+    protected String smtlibv2_name_impl(boolean prestate) {
+        return "(select " + sequence.smtlibv2_name(prestate) + " " +
+          indexExplicit(sequence, index).smtlibv2_name(prestate) + ")";
+    }
     protected String java_name_impl(VarInfo v) {
       return java_family_impl(OutputFormat.JAVA, v);
     }
@@ -1897,6 +1993,10 @@ public abstract /*@Interned*/ class VarInfoName
       System.out.println(" seq: " + sequence + " " + i + " " + j);
       throw new UnsupportedOperationException("Simplify cannot format an unquantified slice of elements");
     }
+    protected String smtlibv2_name_impl(boolean prestate) {
+        System.out.println(" seq: " + sequence + " " + i + " " + j);
+        throw new UnsupportedOperationException("SMTLIBv2 cannot format an unquantified slice of elements");
+      }
     protected String java_name_impl(VarInfo v) {
       return slice_helper(OutputFormat.JAVA, v);
     }
