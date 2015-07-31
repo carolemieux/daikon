@@ -7,12 +7,10 @@ import daikon.derive.unary.*;   // see dbc_name_impl(VarInfo v)
 import daikon.derive.binary.*;  // see dbc_name_impl(VarInfo v)
 import daikon.derive.ternary.*; // see dbc_name_impl(VarInfo v)
 import daikon.chicory.DaikonVariableInfo;
-
 import plume.*;
 
 import java.util.logging.Logger;
 import java.util.logging.Level;
-
 import java.lang.ref.WeakReference;
 import java.io.Serializable;
 import java.io.ObjectInputStream;
@@ -1436,6 +1434,11 @@ public abstract /*@Interned*/ class VarInfoName
     protected String simplify_name_impl(boolean prestate) {
       return "(typeof " + term.simplify_name(prestate) + ")";
     }
+    
+	protected String smtlibv2_name_impl(boolean prestate) {
+		// TODO does this need to be different
+		return "(typeof " + term.smtlibv2_name(prestate) + ")";
+	}
 
     /*@SideEffectFree*/ protected String javaFamilyFormat(String varname, boolean isArray) {
       if (isArray) {
@@ -1464,6 +1467,7 @@ public abstract /*@Interned*/ class VarInfoName
     public <T> T accept(Visitor<T> v) {
       return v.visitTypeOf(this);
     }
+
   }
 
   /**
@@ -1738,6 +1742,10 @@ public abstract /*@Interned*/ class VarInfoName
     }
     protected String simplify_name_impl(boolean prestate) {
       return "(select elems " + term.simplify_name(prestate) + ")";
+    }
+    protected String smtlibv2_name_impl(boolean prestate){
+      //TODO: fix for cases where we take typeof
+      return term.smtlibv2_name(prestate);
     }
     protected String java_name_impl(VarInfo v) {
       return term.java_name(v);
