@@ -2876,6 +2876,10 @@ public abstract /*@Interned*/ class VarInfoName
       protected String simplify_name_impl(boolean prestate) {
         return super.simplify_name_impl(false);
       }
+      protected String smtlibv2_name_impl(boolean prestate) {
+          return super.smtlibv2_name_impl(false);
+      }
+
     }
 
     // <root, needy, index> -> <root', lower, upper>
@@ -3453,7 +3457,162 @@ public abstract /*@Interned*/ class VarInfoName
 
       return result;
     }
+    
+    //////////////////////////
+    // Under development: SMTLIBv2 version
 
+    public static String[] smtlibv2NameAndBounds(VarInfoName name) {
+      String[] results = new String[3];
+      boolean preState = false;
+      if (name instanceof Prestate) {
+        Prestate wrapped = (Prestate)name;
+        name = wrapped.term;
+        preState = true;
+      }
+      if (name instanceof Elements) {
+        Elements sequence = (Elements)name;
+        VarInfoName array = sequence.term;
+        results[0] = array.smtlibv2_name(preState);
+        results[1] = sequence.getLowerBound().smtlibv2_name(preState);
+        results[2] = sequence.getUpperBound().smtlibv2_name(preState);
+        return results;
+      } else if (name instanceof Slice) {
+        Slice slice = (Slice)name;
+        VarInfoName array = slice.sequence.term;
+        results[0] = array.smtlibv2_name(preState);
+        results[1] = slice.getLowerBound().smtlibv2_name(preState);
+        results[2] = slice.getUpperBound().smtlibv2_name(preState);
+        return results;
+      } else {
+        // There are some other cases this scheme can't handle.
+        // For instance, if every Book has an ISBN, a front-end
+        // might distribute the access to that field over an array
+        // of books, so that "books[].isbn" is an array of ISBNs,
+        // though its name has type Field.
+        return null;
+      }
+    }
+    
+    // <root*> -> <string string*>
+    /**
+     * Given a list of roots, return a String array where the first
+     * element is a smtlibv2-style quantification over
+     * newly-introduced bound variables, the last element is a closer,
+     * and the other elements are simplify-named strings for the
+     * provided roots (with sequences subscripted by one of the new
+     * bound variables).
+     *
+     * If elementwise is true, include the additional contraint that
+     * the indices (there must be exactly two in this case) refer to
+     * corresponding positions. If adjacent is true, include the
+     * additional constraint that the second index be one more than
+     * the first. If distinct is true, include the constraint that the
+     * two indices are different. If includeIndex is true, return
+     * additional strings, after the roots but before the closer, with
+     * the names of the index variables.
+     **/
+    // XXX This argument list is starting to get out of hand. -smcc
+    public static String[] format_smtlibv2(VarInfoName[] roots) {
+      return format_simplify(roots, false, false, false, false);
+    }
+    public static String[] format_smtlibv2(VarInfoName[] roots,
+                                           boolean eltwise) {
+      return format_simplify(roots, eltwise, false, false, false);
+    }
+    public static String[] format_smtlibv2(VarInfoName[] roots,
+                                           boolean eltwise,
+                                           boolean adjacent) {
+      return format_simplify(roots, eltwise, adjacent, false, false);
+    }
+    public static String[] format_smtlibv2(VarInfoName[] roots,
+                                           boolean eltwise,
+                                           boolean adjacent,
+                                           boolean distinct) {
+      return format_simplify(roots, eltwise, adjacent, distinct, false);
+    }
+    public static String[] format_smtlibv2(VarInfoName[] roots,
+                                           boolean elementwise,
+                                           boolean adjacent,
+                                           boolean distinct,
+                                           boolean includeIndex) {
+      assert roots != null;
+
+      if (adjacent || distinct)
+        assert roots.length == 2;
+
+      QuantifyReturn qret = quantify(roots);
+
+      // build the forall predicate
+      String[] result = new String[(includeIndex ? 2 : 1) * roots.length + 2];
+      StringBuffer int_list, conditions;
+      {
+        // "i j ..."
+        int_list = new StringBuffer();
+        // "(AND (<= ai i) (<= i bi) (<= aj j) (<= j bj) ...)"
+        // if elementwise, also insert "(EQ (- i ai) (- j aj)) ..."
+        conditions = new StringBuffer();
+        for (int i=0; i < qret.bound_vars.size(); i++) {
+          VarInfoName[] boundv = qret.bound_vars.get(i);
+          VarInfoName idx = boundv[0], low = boundv[1], high = boundv[2];
+          if (i != 0) {
+            int_list.append(" ");
+            conditions.append(" ");
+          }
+          int_list.append("(" + idx.smtlibv2_name() + " Int)");
+          conditions.append( "(<= " + low.smtlibv2_name() + " " + idx.smtlibv2_name() + ")");
+          conditions.append(" (<= " + idx.smtlibv2_name() + " " + high.smtlibv2_name() + ")");
+          if (elementwise && (i >= 1)) {
+            VarInfoName[] _boundv = qret.bound_vars.get(i-1);
+            VarInfoName _idx = _boundv[0], _low = _boundv[1];
+            if (_low.smtlibv2_name().equals(low.smtlibv2_name())) {
+              conditions.append(" (= " + _idx.smtlibv2_name() + " "
+                                + idx.smtlibv2_name() + ")");
+            } else {
+              conditions.append(" (= (- " + _idx.smtlibv2_name() + " " + _low.smtlibv2_name() + ")");
+              conditions.append(    " (- " + idx.smtlibv2_name() + " " + low.smtlibv2_name() + "))");
+            }
+          }
+          if (i == 1 && (adjacent || distinct)) {
+            VarInfoName[] _boundv = qret.bound_vars.get(i-1);
+            VarInfoName prev_idx = _boundv[0];
+            if (adjacent)
+              conditions.append(" (= (+ " + prev_idx.smtlibv2_name() + " 1) "
+                                + idx.smtlibv2_name() + ")");
+            if (distinct)
+              conditions.append(" (!= " + prev_idx.smtlibv2_name() + " "
+                                + idx.smtlibv2_name() + ")");
+          }
+        }
+      }
+      result[0] = "(forall (" + int_list + ") " +
+        "(implies (and " + conditions + ") ";
+
+      // stringify the terms
+      for (int i=0; i < qret.root_primes.length; i++) {
+        result[i+1] = qret.root_primes[i].smtlibv2_name();
+      }
+
+      // stringify the indices, if requested
+      // note that the index should be relative to the slice, not relative
+      // to the original array (we used to get this wrong)
+      if (includeIndex) {
+        for (int i=0; i < qret.root_primes.length; i++) {
+          VarInfoName[] boundv = qret.bound_vars.get(i);
+          VarInfoName idx_var = boundv[0];
+          String idx_var_name = idx_var.smtlibv2_name();
+          String lower_bound = qret.bound_vars.get(i)[1].smtlibv2_name();
+          String idx_expr = "(- " + idx_var_name + " " + lower_bound + ")";
+          result[i + qret.root_primes.length + 1] = idx_expr;
+        }
+      }
+
+      result[result.length-1] = "))"; // close IMPLIES, FORALL
+
+      return result;
+    }
+    
+    
+    
     // Important Note: The Java quantification style actually makes no
     // sense as is.  The resultant quantifications are statements as
     // opposed to expressions, and thus no value can be derived from

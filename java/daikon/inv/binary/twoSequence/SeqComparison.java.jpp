@@ -373,6 +373,10 @@ public class SEQSEQINTEQUAL
     if (format == OutputFormat.SIMPLIFY) {
       return format_simplify();
     }
+    
+    if (format == OutputFormat.SMTLIBV2) {
+      return format_smtlibv2();
+    }
 
     if (format == OutputFormat.DAIKON)
     {
@@ -458,6 +462,51 @@ public class SEQSEQINTEQUAL
       String classname = this.getClass().toString().substring(6);
       return "warning: method " + classname
         + ".format_simplify_explicit() needs to be implemented: " + format();
+    #endif
+  }
+  
+    public String format_smtlibv2() {
+    if (Invariant.dkconfig_simplify_define_predicates)
+      return format_smtlibv2_defined();
+    else
+      return format_smtlibv2_explicit();
+  }
+
+  private String format_smtlibv2_defined() {
+    String[] var1_name = var1().smtlibv2NameAndBounds();
+    String[] var2_name = var2().smtlibv2NameAndBounds();
+    if (var1_name == null || var2_name == null) {
+      return "format_smtlibv2 can't handle one of these sequences: "
+        + format();
+    }
+    return "decl: (declare-const "+ var1().smtlibv2_name() +" (Array Int String)) " + 
+     "(declare-const "+ var2().smtlibv2_name() + " (Array Int String)) inv: (|lexical-" + EQUALSstring + "| " +
+      var1_name[0] + " " + var1_name[1] + " " + var1_name[2] + " " +
+      var2_name[0] + " " + var2_name[1] + " " + var2_name[2] + ")";
+  }
+
+  private String format_smtlibv2_explicit() {
+    #if (defined(EQUAL) || defined(EQUALSTRING) || defined(EQUALFLOAT))
+      // A simple case: if two sequences are lexically equal iff they
+      // are elementwise equal.
+      String[] form = VarInfo.smtlibv2_quantify (QuantFlags.element_wise(),
+                                                 var1(), var2());
+      #if defined(EQUAL)
+      String decl = "decl: (declare-const " +var1().smtlibv2_name() +" (Array Int Int)) " +
+               "(declare-const " + var2().smtlibv2_name() + " (Array Int Int))";
+      #elif defined(EQUALSTRING)
+      String decl = "decl: (declare-const " +var1().smtlibv2_name() +" (Array Int String)) " +
+               "(declare-const " + var2().smtlibv2_name() + " (Array Int String))";      
+      #elif defined(EQUALFLOAT)
+      String decl = "decl: (declare-const " +var1().smtlibv2_name() +" (Array Int Real)) " +
+               "(declare-const " + var2().smtlibv2_name() + " (Array Int Real))";
+      #endif
+      return decl + " inv: " +form[0] +
+        "(= " + form[1] + " " + form[2] + ")" + form[3];
+    #else
+      String classname = this.getClass().toString().substring(6);
+      return "warning: method " + classname
+        + ".format_smtlibv2_explicit() needs to be implemented: " + format();
     #endif
   }
 

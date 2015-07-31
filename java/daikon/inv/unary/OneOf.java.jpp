@@ -1410,7 +1410,13 @@ public String format_smtlibv2() {
        return "(and)";
 #endif
     sort_rep();
-    String varname = var().smtlibv2_name();
+#if defined(IS_ELT)
+    String[] form = VarInfo.smtlibv2_quantify (var());
+    String varname = form[1];
+#elif defined(IS_SCALAR)
+    String varname =
+      var().smtlibv2Fixup(var().name_using(OutputFormat.SMTLIBV2));
+#endif
     String decl_result;
     String inv_result;
 #if defined(STRING) || defined(ELTSTRING)
@@ -1434,7 +1440,7 @@ public String format_smtlibv2() {
         }
         value = "|T_" + value + "|";
       } else {
-        value = TOSTRING_SIMPLIFY(value); //TODO: update to other method
+        value = value; //TODO: update to other method
       }
       #if defined(STRING)
       inv_result += " (= " + varname + " " + value + ")";
@@ -1524,7 +1530,7 @@ public String format_smtlibv2() {
       inv_result = "";
       for (int i=0; i<num_elts; i++) {
         //right now using TOSTRING_SIMPLIFY. should be edited for SMTLIB spec
-        inv_result += " (= " + select_varname + " " + TOSTRING_SIMPLIFY(elts[i]) + ")";
+        inv_result += " (= " + select_varname + " " + elts[i] + ")";
       }
       if (num_elts > 1) {
         #if defined(SCALAR)
@@ -1572,7 +1578,7 @@ public String format_smtlibv2() {
       
 #ifdef SEQUENCE
       if (is_hashcode()) {
-        String[] form = VarInfo.simplify_quantify (var());
+        String[] form = VarInfo.smtlibv2_quantify (var());
         if (no_nulls(i)) {
           contents = "(forall ((i Int)) (implies (and (>= i 0) (<= i " + length +")) (!= (select " + var().smtlibv2_name() + " i)  null)))";
         } else if (all_nulls(i)) {
@@ -1614,14 +1620,14 @@ public String format_smtlibv2() {
           } else {
 
             // Output a single value
-            String nth = var().get_simplify_selectNth_lower (j);
+            String nth = var().get_smtlibv2_selectNth_lower (j);
             if (nth == null) {
               String classname = this.getClass().toString().substring(6);
               inv_result = "warning: method " + classname
-                + ".format_simplify() needs to fix selectNth(): " + format();
+                + ".format_smtlibv2() needs to fix selectNth(): " + format();
               return inv_result;
             }
-            String value = TOSTRING_SIMPLIFY(seq[j]);
+            String value = TOSTRING_SIMPLIFY(seq[j]); //TODO: update with SMTLIBV2 stuff
             contentsBuf.append(" (= " + nth + " " + value + ")");
             // if (nth.contains ("--orig__a"))
             //   System.out.printf ("regular orig__a%n");
@@ -1654,13 +1660,13 @@ public String format_smtlibv2() {
       // chop leading space
       inv_result = resultBuf.toString().substring(1);
     } else if (num_elts == 0) {
-      return format_too_few_samples(OutputFormat.SIMPLIFY, null);
+      return format_too_few_samples(OutputFormat.SMTLIBV2, null);
     } else {
       throw new Error("this can't happen");
       // inv_result = null;
     }
     if (inv_result.trim().equals(""))
-      inv_result = "format_simplify() failed on a weird OneOf";
+      inv_result = "format_smtlibv2() failed on a weird OneOf";
     inv_result = "inv: " + inv_result;
 #else
     String classname = this.getClass().toString().substring(6); // remove leading "class "

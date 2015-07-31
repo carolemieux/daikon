@@ -63,6 +63,7 @@ public class Quantify {
     /*@SideEffectFree*/ public String jml_name() { return esc_name(); }
     /*@SideEffectFree*/ public String jml_name(boolean in_prestate) { return jml_name(); }
     /*@SideEffectFree*/ public String simplify_name() { return name(); }
+    /*@SideEffectFree*/ public String smtlibv2_name() { return name(); }
     /*@SideEffectFree*/ public String csharp_name() { return name(); }
     /*@SideEffectFree*/ protected static String name_with_offset (String name, int offset) {
       if (offset == 0)
@@ -70,6 +71,7 @@ public class Quantify {
       else
         return String.format ("%s%+d", name, offset);
     }
+
   }
 
   /**
@@ -522,6 +524,150 @@ public class Quantify {
     /** Returns the string to be appended to the end of the quantification **/
     public String get_closer() {
       return "))"; // close IMPLIES, FORALL
+    }
+  }
+  
+  /**
+   * Class that represents an Smtlibv2 quantification over one or two variables
+   */
+  public static class Smtlibv2Quantification {
+
+    EnumSet<QuantFlags> flags;
+    String quantification;
+    String[] arr_vars_indexed;
+    /*@Nullable*/ String[] indices;
+
+    public Smtlibv2Quantification (EnumSet<QuantFlags> flags, VarInfo... vars) {
+      this.flags = flags.clone();
+
+      assert vars != null;
+      assert (vars.length == 1) || (vars.length == 2) : vars.length;
+      assert vars[0].file_rep_type.isArray();
+
+      if (flags.contains (QuantFlags.ADJACENT)
+          || flags.contains (QuantFlags.DISTINCT))
+        assert vars.length == 2;
+
+     QuantifyReturn[] qrets = quantify(vars);
+
+      // build the forall predicate
+      StringBuffer int_list, conditions;
+      {
+        // "i j ..."
+        int_list = new StringBuffer();
+        // "(AND (<= ai i) (<= i bi) (<= aj j) (<= j bj) ...)"
+        // if elementwise, also insert "(EQ (- i ai) (- j aj)) ..."
+        conditions = new StringBuffer();
+        for (int i = 0; i < qrets.length; i++) {
+          Term idx = qrets[i].index;
+          if (idx == null)
+            continue;
+          VarInfo vi = qrets[i].var;
+          Term low = vi.get_lower_bound();
+          Term high = vi.get_upper_bound();
+          if (i != 0) {
+            int_list.append(" ");
+            conditions.append(" ");
+          }
+          int_list.append("(" + idx.smtlibv2_name() + " Int)");
+          conditions.append( "(<= " + low.smtlibv2_name()
+                             + " " + idx.smtlibv2_name() + ")");
+          conditions.append(" (<= " + idx.smtlibv2_name() + " "
+                            + high.smtlibv2_name() + ")");
+          if (flags.contains (QuantFlags.ELEMENT_WISE) && (i >= 1)) {
+            // Term[] _boundv = qret.bound_vars.get(i-1);
+            // Term _idx = _boundv[0], _low = _boundv[1];
+            @SuppressWarnings("nullness")
+            /*@NonNull*/ Term _idx = qrets[i-1].index;
+            Term _low = qrets[i-1].var.get_lower_bound();
+            if (_low.smtlibv2_name().equals(low.smtlibv2_name())) {
+              conditions.append(" (= " + _idx.smtlibv2_name() + " "
+                                + idx.smtlibv2_name() + ")");
+            } else {
+              conditions.append(" (= (- " + _idx.smtlibv2_name() + " "
+                                + _low.smtlibv2_name() + ")");
+              conditions.append(    " (- " + idx.smtlibv2_name() + " "
+                                    + low.smtlibv2_name() + "))");
+            }
+          }
+          if (i == 1 && (flags.contains (QuantFlags.ADJACENT)
+                         || flags.contains (QuantFlags.DISTINCT))) {
+            // Term[] _boundv = qret.bound_vars.get(i-1);
+            // Term prev_idx = _boundv[0];
+            @SuppressWarnings("nullness")
+            /*@NonNull*/ Term prev_idx = qrets[i-1].index;
+            if (flags.contains (QuantFlags.ADJACENT))
+              conditions.append(" (= (+ " + prev_idx.smtlibv2_name() + " 1) "
+                                + idx.simplify_name() + ")");
+            if (flags.contains (QuantFlags.DISTINCT))
+              conditions.append(" (!= " + prev_idx.smtlibv2_name() + " "
+                                + idx.smtlibv2_name() + ")");
+          }
+        }
+      }
+      quantification = "(forall (" + int_list + ") " + "(implies (and "
+        + conditions + ") ";
+
+      // stringify the terms
+      List<String> avi_list = new ArrayList<String>(vars.length);
+      for (QuantifyReturn qret : qrets) {
+        String arr_var_indexed;
+        if (qret.index != null) {
+          Term index = qret.index;
+          VarInfo arr_var = qret.var.get_array_var();
+          arr_var_indexed = arr_var.smtlibv2_name (index.simplify_name());
+          // System.out.printf ("vi = %s, arr_var = %s\n", vi, arr_var);
+        } else {
+          arr_var_indexed = qret.var.smtlibv2_name();
+        }
+        avi_list.add(arr_var_indexed);
+      }
+      arr_vars_indexed = avi_list.toArray(new String[avi_list.size()]);
+
+      // stringify the indices,
+      // note that the index should be relative to the slice, not relative
+      // to the original array (we used to get this wrong)
+      indices = new /*@Nullable*/ String[vars.length];
+      for (int i=0; i < qrets.length; i++) {
+        // Term[] boundv = qret.bound_vars.get(i);
+        // Term idx_var = boundv[0];
+        QuantifyReturn qret = qrets[i];
+        if (qret.index == null)
+          continue;
+        String idx_var_name = qret.index.smtlibv2_name();
+        String lower_bound = qret.var.get_lower_bound().smtlibv2_name();
+        String idx_expr = "(- " + idx_var_name + " " + lower_bound + ")";
+        indices[i] = idx_expr;
+      }
+    }
+
+    /**
+     * Returns the quantification string that quantifies over each of the
+     * free variables.
+     **/
+    public String get_quantification() {
+      return quantification;
+    }
+
+    /**
+     * Returns the specified array variable indexed by its index.
+     * For example, if the array variable is 'a[]' and the index is 'i',
+     * returns 'select i a'
+     **/
+    public String get_arr_vars_indexed (int num) {
+      return arr_vars_indexed [num];
+    }
+
+    /** Returns the specified index **/
+    @SuppressWarnings("nullness:return.type.incompatible") // possible application invariant?
+    public String get_index (int num) {
+      assert indices[num] != null; // will this assertion fail?
+      return indices[num];
+    }
+
+    /** Returns the string to be appended to the end of the quantification **/
+    public String get_closer() {
+      return "))"; // close implies, forall
     }
   }
 }

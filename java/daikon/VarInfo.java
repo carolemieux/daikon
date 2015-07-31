@@ -3750,10 +3750,260 @@ public final /*@Interned*/ class VarInfo implements Cloneable, Serializable {
   public static String[] simplify_quantify (VarInfo ...vars) {
     return simplify_quantify (EnumSet.noneOf (QuantFlags.class), vars);
   }
-  // TODO: between this and prev todo were a bunch of simplify methods
-  // that might need to be adapted.
 
 
+  /**
+   * Returns a string array with 3 elements.  The first element is
+   * the sequence, the second element is the lower bound, and the third
+   * element is the upper bound.  Returns null if this is not a direct
+   * array or slice.
+   */
+  public String /*@Nullable*/ [] smtlibv2NameAndBounds() {
+    if (!FileIO.new_decl_format)
+      return VarInfoName.QuantHelper.smtlibv2NameAndBounds (var_info_name); // vin ok
+
+    String[] results = new String[3];
+    if (is_direct_non_slice_array()
+        || (derived instanceof SequenceSubsequence)) {
+      results[0] = get_base_array_hashcode().smtlibv2_name();
+      results[1] = get_lower_bound().smtlibv2_name();
+      results[2] = get_upper_bound().smtlibv2_name();
+      return results;
+    }
+
+    return null;
+
+  }
+
+  /**
+   * Returns the upper and lower bounds of the slice in smtlibv2 format.
+   * The implementation is somewhat different that smtlibv2NameAndBounds
+   * (I don't know why).
+   */
+  public String /*@Nullable*/ [] get_smtlibv2_slice_bounds() {
+    if (!FileIO.new_decl_format) {
+      /*@Interned*/ VarInfoName[] bounds = var_info_name.getSliceBounds(); // vin ok
+      if (bounds == null)
+        return null;
+      String[] str_bounds = new String[2];
+      str_bounds[0] = bounds[0].smtlibv2_name();
+      str_bounds[1] = bounds[1].smtlibv2_name();
+      return str_bounds;
+    }
+
+    String[] results = new String[2];
+    if (derived instanceof SequenceSubsequence) {
+      results[0] = get_lower_bound().smtlibv2_name().intern();
+      results[1] = get_upper_bound().smtlibv2_name().intern();
+    } else {
+      results = null;
+    }
+
+    return results;
+
+  }
+
+  /**
+   * Return a string in smtlibv2 format that will select the
+   * (index_base + index_off)-th element of the sequence specified by
+   * this variable.
+   *
+   * @param smtlibv2_index_name name of the index.  If free is false, this
+   * must be a number or null (null implies an index of 0)
+   * @param free true if smtlibv2_index_name is variable name
+   * @param index_off offset from the index
+   */
+  public String get_smtlibv2_selectNth (String smtlibv2_index_name,
+                                        boolean free, int index_off) {
+
+    // Remove the simplify bars if present from the index name
+    if ((smtlibv2_index_name != null) && smtlibv2_index_name.startsWith ("|")
+        && smtlibv2_index_name.endsWith ("|"))
+      smtlibv2_index_name
+        = smtlibv2_index_name.substring (1, smtlibv2_index_name.length()-1);
+
+    // Use VarInfoName to handle the old format
+    if (!FileIO.new_decl_format) {
+      VarInfoName select
+        = VarInfoName.QuantHelper.selectNth (this.var_info_name, // vin ok
+                                        smtlibv2_index_name, free, index_off);
+      return select.smtlibv2_name();
+    }
+
+    // Calculate the index (including the offset if non-zero)
+    String complete_index = null;
+    if (!free) {
+      int index = 0;
+      if (smtlibv2_index_name != null)
+        index = Integer.decode (smtlibv2_index_name);
+      index += index_off;
+      complete_index = String.format ("%d", index);
+    } else {
+      if (index_off != 0)
+        complete_index = String.format ("(+ |%s| %d)", smtlibv2_index_name,
+                                        index_off);
+      else
+        complete_index = String.format ("|%s|", smtlibv2_index_name);
+    }
+
+    // Return the array properly indexed
+    return smtlibv2_name (complete_index);
+  }
+
+  /**
+   * Return a string in smtlibv2 format that will select the
+   * index_off element in a sequence that has a lower bound.
+   *
+   * @param index_off offset from the index
+   */
+  public String get_smtlibv2_selectNth_lower (int index_off) {
+
+    // Use VarInfoName to handle the old format
+    if (!FileIO.new_decl_format) {
+      /*@Interned*/ VarInfoName[] bounds = var_info_name.getSliceBounds();
+      VarInfoName lower = null;
+      if (bounds != null)
+        lower = bounds[0];
+      VarInfoName select
+        = VarInfoName.QuantHelper.selectNth (var_info_name, // vin ok
+                                             lower, index_off);
+      return select.smtlibv2_name();
+    }
+
+    // Calculate the index (including the offset if non-zero)
+    String complete_index = null;
+    Quantify.Term lower = get_lower_bound();
+    String lower_name = lower.smtlibv2_name();
+    if (!(lower instanceof Quantify.Constant))
+      lower_name = String.format ("|%s|", lower_name);
+    if (index_off != 0) {
+      if (lower instanceof Quantify.Constant)
+        complete_index = String.format ("%d",
+                            ((Quantify.Constant) lower).get_value() + index_off);
+      else
+        complete_index = String.format ("(+ %s %d)", lower_name, index_off);
+    } else
+      complete_index = String.format ("%s", lower_name);
+
+    // Return the array properly indexed
+    // System.err.printf ("lower bound type = %s [%s] %s\n", lower,
+    //                   lower.getClass(), complete_index);
+    return smtlibv2_name (complete_index);
+  }
+
+  /**
+   * Get a fresh variable name that doesn't appear in the given
+   * variable in smtlibv2 format
+   */
+  public static String get_smtlibv2_free_index (VarInfo... vars) {
+    if (!FileIO.new_decl_format) {
+      VarInfoName[] vins = new VarInfoName[vars.length];
+      for (int ii = 0; ii < vars.length; ii++) {
+        vins[ii] = vars[ii].var_info_name; // vin ok
+      }
+      return VarInfoName.QuantHelper.getFreeIndex (vins).smtlibv2_name();
+    }
+
+    // Get a free variable for each variable and return the first one
+    QuantifyReturn[] qret = Quantify.quantify (vars);
+    return qret[0].index.simplify_name();
+  }
+
+  /**
+   * Get a 2 fresh variable names that doesn't appear in the given
+   * variable in smtlibv2 format
+   */
+  public static String[] get_smtlibv2_free_indices (VarInfo... vars) {
+    if (!FileIO.new_decl_format) {
+      if (vars.length == 1) {
+        VarInfoName index1_vin
+          = VarInfoName.QuantHelper.getFreeIndex (vars[0].var_info_name);  // vin ok
+        String index2 = VarInfoName.QuantHelper.getFreeIndex
+          (vars[0].var_info_name, index1_vin).smtlibv2_name(); // vin ok
+        return new String[] {index1_vin.name(), index2};
+      } else if (vars.length == 2) {
+        VarInfoName index1_vin = VarInfoName.QuantHelper.getFreeIndex
+          (vars[0].var_info_name, vars[1].var_info_name); // vin ok
+        String index2 = VarInfoName.QuantHelper.getFreeIndex
+          (vars[0].var_info_name, vars[2].var_info_name, index1_vin) // vin ok
+          .smtlibv2_name();
+        return new String[] {index1_vin.name(), index2};
+      } else
+        throw new Error ("unexpected length " + vars.length);
+    }
+
+    // Get a free variable for each variable
+    if (vars.length == 1)
+      vars = new VarInfo[] {vars[0], vars[0]};
+    QuantifyReturn qret[] = Quantify.quantify (vars);
+    return new String[] {qret[0].index.simplify_name(),
+                         qret[1].index.simplify_name()};
+  }
+
+  /**
+   * Quantifies over the specified array variables in smtlibv2 format.
+   * Returns a string array that contains the quantification, indexed
+   * form of each variable, optionally the index itself, and the closer.
+   *
+   * If elementwise is true, include the additional contraint that
+   * the indices (there must be exactly two in this case) refer to
+   * corresponding positions. If adjacent is true, include the
+   * additional constraint that the second index be one more than
+   * the first. If distinct is true, include the constraint that the
+   * two indices are different. If includeIndex is true, return
+   * additional strings, after the roots but before the closer, with
+   * the names of the index variables.
+   */
+  public static String[] smtlibv2_quantify (EnumSet<QuantFlags> flags,
+                                            VarInfo ...vars) {
+
+    if (!FileIO.new_decl_format) {
+      // Get the names for each variable.
+      VarInfoName vin[] = new VarInfoName[vars.length];
+      for (int ii = 0; ii < vars.length; ii++)
+        vin[ii] = vars[ii].var_info_name; // vin ok
+
+      return VarInfoName.QuantHelper.format_simplify
+        (vin, flags.contains (QuantFlags.ELEMENT_WISE),
+         flags.contains (QuantFlags.ADJACENT),
+         flags.contains (QuantFlags.DISTINCT),
+         flags.contains (QuantFlags.INCLUDE_INDEX));
+    }
+
+    Quantify.Smtlibv2Quantification quant
+      = new Quantify.Smtlibv2Quantification (flags, vars);
+    boolean include_index = flags.contains (QuantFlags.INCLUDE_INDEX);
+    if ((vars.length == 1) && include_index)
+      return new String[] {quant.get_quantification(),
+                           quant.get_arr_vars_indexed(0),
+                           quant.get_index(0), quant.get_closer()};
+    else if (vars.length == 1)
+      return new String[] {quant.get_quantification(),
+                           quant.get_arr_vars_indexed(0),
+                           quant.get_closer()};
+    else if ((vars.length == 2) && include_index)
+      return new String[] {quant.get_quantification(),
+                           quant.get_arr_vars_indexed(0),
+                           quant.get_arr_vars_indexed(1),
+                           quant.get_index(0), quant.get_index(1),
+                           quant.get_closer()};
+    else // must be length 2 and no index
+      return new String[] {quant.get_quantification(),
+                           quant.get_arr_vars_indexed(0),
+                           quant.get_arr_vars_indexed(1),
+                           quant.get_closer()};
+
+  }
+
+  /** @see #smtlibv2_quantify(EnumSet, VarInfo[]) */
+  public static String[] smtlibv2_quantify (VarInfo ...vars) {
+    return smtlibv2_quantify (EnumSet.noneOf (QuantFlags.class), vars);
+  }
+
+  
+  
+  
+  
   /**
    * Returns a rough indication of the complexity of the variable.  Higher
    * numbers indicate more complexity.
