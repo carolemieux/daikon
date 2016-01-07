@@ -8,7 +8,7 @@ help-here:
 	@echo "make options for all tests"
 	@echo "  make quick        : run subset of regression tests and display results"
 	@echo ""
-	@echo "  make all          : run all regression tests and display results"
+	@echo "  make all          : run all regression tests (except Kvasir), display results"
 	@echo "  make diffs        : same as 'make all'"
 	@echo "  make results      : don't run tests, just display last results"
 	@echo "  make summary      : don't run tests, just display summary of last results"
@@ -36,7 +36,7 @@ quick: quick-txt-diff diff-tests results
 
 # targets that descend to child direcories
 quick-txt-diff txt-diff update-goals merge spinfo-static txt-suppress inv-checker-diff \
-txt-daikon txt-chicory cross-checker cross-checker-good chicory chicory-diff \
+txt-daikon txt-chicory cross-checker chicory chicory-diff \
 esc jml inv txt-daikon-diff txt-esc-diff txt-jml-diff txt-csharpcontract-diff txt-merge-diff \
 txt-chicory-diff everything-txt-diff stats dyncomp-diff txt-jaif-diff txt-jaif:
 	$(MAKE) pat-daikon-tests-$@

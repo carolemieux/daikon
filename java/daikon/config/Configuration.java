@@ -57,16 +57,9 @@ public final class Configuration
    * @return singleton instance of this class
    **/
   public static Configuration getInstance() {
-    if (instance == null) {
-      synchronized (Configuration.class) {
-        if (instance == null) {
-          instance = new Configuration();
-        }
-      }
-    }
     return instance;
   }
-  private static volatile /*@MonotonicNonNull*/ Configuration instance = null;
+  private static volatile /*@NonNull*/ Configuration instance = new Configuration();
 
   /**
    * This used to read a file containing all of the configurable
@@ -80,7 +73,7 @@ public final class Configuration
    * date and it seemed that the random results were better than no
    * attempt at all.  The file has thus been removed.  If a
    * configuration is changed it only contains those items specified,
-   * not the default values of unspecified options
+   * not the default values of unspecified options.
    */
   private Configuration() {
   }
@@ -155,7 +148,9 @@ public final class Configuration
     assert value != null;
 
     int dot = name.lastIndexOf('.');
-    assert dot >= 0 : "Name must contain a period (.)";
+    if (dot == -1) {
+      throw new daikon.Daikon.TerminationMessage("Configuration option name must contain a period (.): " + name);
+    }
 
     @SuppressWarnings("signature") // substring operation
     /*@ClassGetName*/ String classname = name.substring(0, dot);

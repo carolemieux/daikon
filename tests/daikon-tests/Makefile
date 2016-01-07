@@ -1,7 +1,9 @@
 ###########################################################################
 # Read Makefile in parent directory to see what this all means
 
-DAIKONDIR?=$(HOME)/research/invariants
+DAIKONDIR_DEFAULT := $(realpath $(dir $(lastword $(MAKEFILE_LIST)))..)
+# DAIKONDIR is where the 'daikon' project is cloned
+DAIKONDIR?=${DAIKONDIR_DEFAULT}
 SCRIPTS?=$(DAIKONDIR)/scripts
 
 # Help system
@@ -17,9 +19,6 @@ clean clean-output txt-diff txt-daikon-suppress-diffed txt-suppress txt-daikon t
 
 cross-checker:
 	$(MAKE) everything-cross-checker
-
-cross-checker-good:
-	$(MAKE) cross-checker-good-$@
 
 ###########################################################################
 # Useful groupings of projects (everything, default, by source, etc.)

@@ -18,6 +18,7 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -85,8 +86,8 @@ public final class Daikon {
 
   // Don't change the order of the modifiers on these strings as they
   // are automatically updated as part of the release process
-  public final static String release_version = "5.2.9";
-  public final static String release_date = "July 1, 2015";
+  public final static String release_version = "5.2.21";
+  public final static String release_date = "January 6, 2016";
   public final static String release_string =
     "Daikon version "
       + release_version
@@ -1649,8 +1650,8 @@ public final class Daikon {
       create_splitters(spinfo_files);
       System.out.print("\r(read ");
       System.out.print(UtilMDE.nplural(spinfo_files.size(), "spinfo file"));
-      System.out.print(" , ");
-      System.out.print(UtilMDE.nplural(parsedSplitters.size(), "splitter"));
+      System.out.print(", ");
+      System.out.print(UtilMDE.nplural(SpinfoFile.numSplittterObjects(spinfoFiles), "splitter"));
       System.out.println(")");
     } catch (IOException e) {
       System.out.println();
@@ -1690,7 +1691,7 @@ public final class Daikon {
 
     Global.debugSplit.fine("<<enter>> setup_splitters");
 
-    SplitterFactory.load_splitters(ppt, parsedSplitters);
+    SplitterFactory.load_splitters(ppt, spinfoFiles);
 
     Splitter[] pconds = null;
     if (SplitterList.dkconfig_all_splitters) {
@@ -1813,9 +1814,14 @@ public final class Daikon {
           "Used memory: "
             + (java.lang.Runtime.getRuntime().totalMemory()
               - java.lang.Runtime.getRuntime().freeMemory()));
-        if (FileIO.data_trace_state != null)
-          debugTrace.fine("Active slices: " +
-                          FileIO.data_trace_state.all_ppts.countSlices());
+        try {
+          if (FileIO.data_trace_state != null)
+            debugTrace.fine("Active slices: " +
+                            FileIO.data_trace_state.all_ppts.countSlices());
+        } catch (ConcurrentModificationException e) {
+          // Because this code is a separate thread, the number of ppts
+          // could change during countSlices.  Just ignore and continue.
+        }
       }
     }
   }
@@ -2111,17 +2117,17 @@ public final class Daikon {
     ppt.equality_view.instantiate_invariants();
   }
 
+  private static List<SpinfoFile> spinfoFiles = new ArrayList<SpinfoFile>();
+
   /**
-   * Create user-defined splitters
+   * Create user-defined splitters.  For each file in the input,
+   * add a SpinfoFile to the spinfoFiles variable.
    */
-
-  private static List<SpinfoFileParser> parsedSplitters = new ArrayList<SpinfoFileParser>();
-
   public static void create_splitters(Set<File> spinfo_files)
     throws IOException {
     for (File filename : spinfo_files) {
-      SpinfoFileParser p = SplitterFactory.parse_spinfofile (filename);
-      parsedSplitters.add(p);
+      SpinfoFile sf = SplitterFactory.parse_spinfofile (filename);
+      spinfoFiles.add(sf);
     }
   }
 
