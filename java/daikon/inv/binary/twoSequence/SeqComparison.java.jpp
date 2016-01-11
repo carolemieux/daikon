@@ -497,8 +497,16 @@ public class SEQSEQINTEQUAL
       String decl = "decl: (declare-const " +var1().smtlibv2_name() +" (Array Int Real)) " +
                "(declare-const " + var2().smtlibv2_name() + " (Array Int Real))";
       #endif
+      // TODO: should be doing the inv part like below. unfortunately, there are some 
+      // naming inconsistencies (e.g. dots in the brackets of the array) and this format 
+      // doesn't do (select) properly. How to coordinate select with the correct index?
+      /*
+      String[] form = VarInfo.smtlibv2_quantify (QuantFlags.element_wise(),
+                                                 var1(), var2());
+      System.out.println(form[0] +
+        "(=" + form[1] + " " + form[2] + ")" + form[3]);*/
       return decl + " inv: (forall ((i int) (j int)) (implies (and (>= i 0) (<= i (arrayLength " 
-              + var1().smtlibv2_name() + ")) (>= j 0) (<= j (arrayLength " 
+              + var1().smtlibv2_name() + ")) (>= j 0) (< j (arrayLength " 
               + var2().smtlibv2_name() + ")) (= i j)) (= (select " + var1().smtlibv2_name() 
               + " i) (select " + var2().smtlibv2_name() + " j))))";
     #else

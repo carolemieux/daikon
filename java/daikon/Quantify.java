@@ -163,6 +163,17 @@ public class Quantify {
       else
         return length;
     }
+    /*@SideEffectFree*/ public String smtlibv2_name() {
+      VarInfo arr_var = get_check_array_var ("SMTLIBv2");
+      String length = String.format ("(arrayLength %s)",
+                                     arr_var.smtlibv2_name());
+      if (offset < 0)
+        return String.format ("(- %s %d)", length, -offset);
+      else if (offset > 0)
+        return String.format ("(+ %s %d)", length, offset);
+      else
+        return length;
+    }
     /*@SideEffectFree*/ public String csharp_name() {
       VarInfo arr_var = get_check_array_var("CHARPCONTRACT");
       return name_with_offset (arr_var.csharp_name() + ".Count()", offset);
