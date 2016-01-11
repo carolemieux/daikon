@@ -466,12 +466,9 @@ public class SEQSEQINTEQUAL
   }
   
     public String format_smtlibv2() {
-    if (Invariant.dkconfig_simplify_define_predicates)
-      return format_smtlibv2_defined();
-    else
       return format_smtlibv2_explicit();
   }
-
+/* Don't want to deal with lexical ands/ors
   private String format_smtlibv2_defined() {
     String[] var1_name = var1().smtlibv2NameAndBounds();
     String[] var2_name = var2().smtlibv2NameAndBounds();
@@ -483,14 +480,13 @@ public class SEQSEQINTEQUAL
      "(declare-const "+ var2().smtlibv2_name() + " (Array Int String)) inv: (|lexical-" + EQUALSstring + "| " +
       var1_name[0] + " " + var1_name[1] + " " + var1_name[2] + " " +
       var2_name[0] + " " + var2_name[1] + " " + var2_name[2] + ")";
-  }
+  }*/
 
   private String format_smtlibv2_explicit() {
     #if (defined(EQUAL) || defined(EQUALSTRING) || defined(EQUALFLOAT))
       // A simple case: if two sequences are lexically equal iff they
       // are elementwise equal.
-      String[] form = VarInfo.smtlibv2_quantify (QuantFlags.element_wise(),
-                                                 var1(), var2());
+
       #if defined(EQUAL)
       String decl = "decl: (declare-const " +var1().smtlibv2_name() +" (Array Int Int)) " +
                "(declare-const " + var2().smtlibv2_name() + " (Array Int Int))";
@@ -501,8 +497,10 @@ public class SEQSEQINTEQUAL
       String decl = "decl: (declare-const " +var1().smtlibv2_name() +" (Array Int Real)) " +
                "(declare-const " + var2().smtlibv2_name() + " (Array Int Real))";
       #endif
-      return decl + " inv: " +form[0] +
-        "(= " + form[1] + " " + form[2] + ")" + form[3];
+      return decl + " inv: (forall ((i int) (j int)) (implies (and (>= i 0) (<= i (arrayLength " 
+              + var1().smtlibv2_name() + ")) (>= j 0) (<= j (arrayLength " 
+              + var2().smtlibv2_name() + ")) (= i j)) (= (select " + var1().smtlibv2_name() 
+              + " i) (select " + var2().smtlibv2_name() + " j))))";
     #else
       String classname = this.getClass().toString().substring(6);
       return "warning: method " + classname
