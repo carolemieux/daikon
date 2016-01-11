@@ -572,10 +572,10 @@ public class LOWERBOUND
 #ifdef IS_ELT
     String name = var().smtlibv2_name();
     String name_select = "(select " + name + " i)";
-    return "decl: (declare-const " + name + " (Array Int " + sort + ")) inv: (forall ((i Int)) (" + GTESTR + " " + name_select + " " + MIN1 + ")";
+    return "decl: (declare-const " + name + " (Array Int " + sort + ")) inv: (forall ((i Int)) (implies (and (<= 0 i) (< i (arrayLength " + name + "))) (" + GTESTR + " " + name_select + " " + MIN1 + ")))";
 #else
     String varname = var().smtlibv2_name();
-    return "decl: (declare-contst " + varname + " " + sort +") inv: (" + GTESTR + " " + varname + " " + MIN1 + ")";
+    return "decl: (declare-const " + varname + " " + sort +") inv: (" + GTESTR + " " + varname + " " + MIN1 + ")";
 #endif
   }
 
