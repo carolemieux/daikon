@@ -1405,7 +1405,8 @@ public String format_csharp_contract() {
 
 public String format_smtlibv2() {
 #ifdef BASE_INT
-     // TODO: dkconfig...Simplify should be updated
+     // TODO: dkconfig...Simplify should be updated so this option can be set
+     // for SMTLIBv2 in particular, but looks like it's always false
      if (is_hashcode() && dkconfig_omit_hashcode_values_Simplify)
        return "(and)";
 #endif
@@ -1415,7 +1416,7 @@ public String format_smtlibv2() {
     String varname = form[1];
 #elif defined(IS_SCALAR)
     String varname =
-      var().smtlibv2Fixup(var().name_using(OutputFormat.SMTLIBV2));
+      var().smtlibv2FixedupName();
 #endif
     String decl_result;
     String inv_result;
@@ -1550,7 +1551,7 @@ public String format_smtlibv2() {
       }
     }
 #elif defined(IS_SEQUENCE)
-    // Note: this whole section needs some qork. Hacked stuff so it works for me for the moment
+    // Note: this whole section needs some work. Hacked stuff so it works for me for the moment
     #if defined(SEQUENCE)
     decl_result = "decl: (declare-const " + var().smtlibv2_name() + " (Array Int Int))";
     #elif defined(FLOATSEQUENCE)

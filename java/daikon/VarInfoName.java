@@ -265,7 +265,7 @@ public abstract /*@Interned*/ class VarInfoName
 
   /**
    * @return the string representation (interned) of this name, in the
-   * Simplify tool output format in the pre-state context.
+   * smtlibv2 output format in the pre-state context.
    **/
   public /*@Interned*/ String smtlibv2_name() {
     return smtlibv2_name(false);
@@ -273,7 +273,7 @@ public abstract /*@Interned*/ class VarInfoName
 
   /**
    * @return the string representation (interned) of this name, in the
-   * Simplify tool output format, in the given pre/post-state context.
+   * smtlibv2output format, in the given pre/post-state context.
    **/
   protected /*@Interned*/ String smtlibv2_name(boolean prestate) {
     int which = prestate ? 0 : 1;
@@ -285,7 +285,7 @@ public abstract /*@Interned*/ class VarInfoName
         throw e;
       }
     }
-    return simplify_name_cached[which];
+    return smtlibv2_name_cached[which];
   }
   private /*@Interned*/ String[] smtlibv2_name_cached
     = new /*@Interned*/ String[2]; // each interned
@@ -425,6 +425,7 @@ public abstract /*@Interned*/ class VarInfoName
 
     if (format == OutputFormat.DAIKON) return name();
     if (format == OutputFormat.SIMPLIFY) return simplify_name();
+    if (format == OutputFormat.SMTLIBV2) return smtlibv2_name();
     if (format == OutputFormat.ESCJAVA) return esc_name();
     if (format == OutputFormat.JAVA) return java_name(vi);
     if (format == OutputFormat.JML) return jml_name(vi);

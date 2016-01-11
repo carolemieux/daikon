@@ -1626,10 +1626,11 @@ public final /*@Interned*/ class VarInfo implements Cloneable, Serializable {
    * object.
    **/
   public String smtlibv2Fixup(String str) {
-    // TODO: figure out if "hash" strategy works in smtlibv2
-    //if (isPointer()) {
-    //  str = "(hash " + str + ")";
-    //}
+
+    if (isPointer()) {
+      // add hash
+      str = str.substring(0,str.length() -1) + ".hash|";
+    }
     return str;
   }
 
@@ -3329,7 +3330,14 @@ public final /*@Interned*/ class VarInfo implements Cloneable, Serializable {
     if (index != null) { //TODO: support non-null index
     }
 
-    return "|" + name() + "|";
+    switch (var_kind) {
+    case FIELD:
+      return "|" + name() + "|";
+    default:
+      // distinguish args at different program points
+      return "|" + ppt.name().substring(0,ppt.name().indexOf("("))  + ":" + name() + "|";
+    }
+    
     
     // TODO: adjust for selection, etc, as below. 
     /*
@@ -3906,7 +3914,7 @@ public final /*@Interned*/ class VarInfo implements Cloneable, Serializable {
 
     // Get a free variable for each variable and return the first one
     QuantifyReturn[] qret = Quantify.quantify (vars);
-    return qret[0].index.simplify_name();
+    return qret[0].index.smtlibv2_name();
   }
 
   /**
