@@ -1482,7 +1482,7 @@ public String format_smtlibv2() {
       inv_result = "inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength " + varname + ")) (= (select " + varname + " i) " + ((elts[0] == 0) ? "false" : "true") + ")))";
       #endif
     } else if (is_hashcode()) {
-      // TODO: also need to update hashcode value stuff. Using int for now
+      // using int for hashcodes. 
       #if defined(SCALAR)
       decl_result = "decl: (declare-const " + varname + " Int)";
       String select_varname = varname;
@@ -1491,11 +1491,8 @@ public String format_smtlibv2() {
       String select_varname = "(select " + varname + " i)";
       #endif
       if (num_elts == 1) {
-        long hashcode_val = get_hashcode_val (elts[0]);
-        // TODO: update this the hascode format for SMTLIBv2
-        inv_result = "(= " + select_varname + " " +
-          ((elts[0] == 0) ? "0" :
-           (simplify_format_long(hashcode_val))) + ")";
+        // hashcode just given as plain integer
+        inv_result = "(= " + select_varname + " " + elts[0] + ")";
         #if defined(SCALAR)
         inv_result = "inv: " + inv_result;
         #else
@@ -1530,7 +1527,6 @@ public String format_smtlibv2() {
       #endif
       inv_result = "";
       for (int i=0; i<num_elts; i++) {
-        //right now using TOSTRING_SIMPLIFY. should be edited for SMTLIB spec
         inv_result += " (= " + select_varname + " " + elts[i] + ")";
       }
       if (num_elts > 1) {
@@ -1556,7 +1552,7 @@ public String format_smtlibv2() {
     decl_result = "decl: (declare-const " + var().smtlibv2_name() + " (Array Int Int))";
     #elif defined(FLOATSEQUENCE)
     decl_result = "decl: (declare-const " + var().smtlibv2_name() + " (Array Int Real))";    
-    #else
+    #elif defined(STRINGSEQUENCE)
     decl_result = "decl: (declare-const " + var().smtlibv2_name() + " (Array Int String))";
     #endif
     StringBuffer resultBuf = new StringBuffer();
@@ -1566,16 +1562,6 @@ public String format_smtlibv2() {
       String contents = null;
       String[] bounds_name;
       String length = "(arrayLength " + var().smtlibv2_name() +")";
-      // if ((length == null) && var().name.isApplySizeSafe())
-      //  System.out.printf ("var %s, type %s, is_array %b%n", var().name(),
-      //                     var().type, var().type.isArray());
-      if (length != null) {
-        length = "(= " + length + " "+ simplify_format_long(seq.length) + ")";
-      } else if ((bounds_name = var().get_simplify_slice_bounds()) != null) {
-        String size = "(+ 1 (- " + bounds_name[1] +" " + bounds_name[0] + "))";
-        length = "(= " + size + " " + simplify_format_long(seq.length) + ")";
-        offset = bounds_name[0];
-      }
       
 #ifdef SEQUENCE
       if (is_hashcode()) {
@@ -1628,11 +1614,8 @@ public String format_smtlibv2() {
                 + ".format_smtlibv2() needs to fix selectNth(): " + format();
               return inv_result;
             }
-            String value = TOSTRING_SIMPLIFY(seq[j]); //TODO: update with SMTLIBV2 stuff
+            String value = TOSTRING_SIMPLIFY(seq[j]); //TODO: update with SMTLIBV2 
             contentsBuf.append(" (= " + nth + " " + value + ")");
-            // if (nth.contains ("--orig__a"))
-            //   System.out.printf ("regular orig__a%n");
-
           }
         }
         if (seq.length > 1) {
@@ -1642,6 +1625,13 @@ public String format_smtlibv2() {
         } else if (seq.length == 0) {
           contents = null; // back from ""
         }
+      }
+      if (length != null) {
+        length = "(= " + length + " "+ simplify_format_long(seq.length) + ")";
+      } else if ((bounds_name = var().get_simplify_slice_bounds()) != null) {
+        String size = "(+ 1 (- " + bounds_name[1] +" " + bounds_name[0] + "))";
+        length = "(= " + size + " " + simplify_format_long(seq.length) + ")";
+        offset = bounds_name[0];
       }
       if (length == null && contents == null) {
         resultBuf.append(" ");

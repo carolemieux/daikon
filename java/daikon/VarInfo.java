@@ -3335,7 +3335,13 @@ public final /*@Interned*/ class VarInfo implements Cloneable, Serializable {
       return "|" + name() + "|";
     default:
       // distinguish args at different program points
-      return "|" + ppt.name().substring(0,ppt.name().indexOf("("))  + ":" + name() + "|";
+      if (ppt.name().indexOf(":::OBJECT") != -1) {
+        // object level invariants can only involve fields or derived variables of fields
+        return "|" + name() + "|";
+      } else {
+        // TODO: overly quantifies derived variables of fields
+        return "|" + ppt.name().substring(0,ppt.name().indexOf("("))  + ":" + name() + "|";
+      }
     }
     
     
