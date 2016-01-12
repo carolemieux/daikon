@@ -752,7 +752,6 @@ public abstract class RANGE extends SUPERCLASS {
         #else
         return "decl: (declare-const %var1% " + sort + ") inv: (= (mod %var1% 2) 0)";
         #endif
-        return format_unimplemented(format);
       }
       if (format == OutputFormat.CSHARPCONTRACT)
         return "%var1% % 2 == 0";
