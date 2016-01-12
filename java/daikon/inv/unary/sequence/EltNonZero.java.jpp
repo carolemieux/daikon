@@ -219,7 +219,7 @@ public final class CLASSNAME
    #else
     String sort = "Real";
    #endif
-    return "decl: (declare-const " + var().smtlibv2_name() + " (Array Int " + sort + ")) inv: (forall ((i Int)) (implies (and (>= i 0) (<= i (arrayLength " + var().smtlibv2_name() + "))) (!= (select "+ var().smtlibv2_name() +" i) " +  (is_pointer() ? "null" : "0") + ")))";
+    return "decl: (declare-const " + var().smtlibv2_name() + " (Array Int " + sort + ")) inv: (forall ((i Int)) (implies (and (>= i 0) (< i (arrayLength " + var().smtlibv2_name() + "))) (!= (select "+ var().smtlibv2_name() +" i) 0)))";
   }
 
 

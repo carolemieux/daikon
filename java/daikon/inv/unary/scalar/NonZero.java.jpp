@@ -185,7 +185,7 @@ public class NONZERO
     #else
       String sort = "Real";
     #endif
-      return "decl: (declare-const " + var().smtlibv2_name() + " " + sort + ") inv: (!= " + var().smtlibv2_name() + " " + zero(format) + ")";
+      return "decl: (declare-const " + var().smtlibv2_name() + " " + sort + ") inv: (!= " + var().smtlibv2_name() + " 0)";
     }
 
     return format_unimplemented(format);

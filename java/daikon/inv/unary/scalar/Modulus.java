@@ -117,6 +117,16 @@ public class Modulus
       }
     }
 
+    if (format == OutputFormat.SMTLIBV2) {
+      if (modulus > 0) {
+        return "decl: (declare-const "+var().smtlibv2_name() + 
+         " Int) inv: (= (mod " + var().smtlibv2_name() + " " + 
+         modulus + ") " + remainder + ")";
+      } else {
+        return format_too_few_samples(format, null);
+      }
+    }
+
     return format_unimplemented(format);
   }
 

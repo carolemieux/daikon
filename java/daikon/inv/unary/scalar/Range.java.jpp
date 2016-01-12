@@ -661,7 +661,7 @@ public abstract class RANGE extends SUPERCLASS {
       if (format == OutputFormat.SIMPLIFY)
         return ("(EXISTS (p) (EQ %var1% (pow 2 p)))");
       if (format == OutputFormat.SMTLIBV2)
-        return "Can't handle powers of 2";  // TODO: proper error: not sure SMTLIBV2 supports nonlinera arith
+        return format_unimplemented(format);  
       if (format == OutputFormat.JAVA)
         return "daikon.tools.runtimechecker.Runtime.isPowerOfTwo(%var1%)";
       if (format == OutputFormat.CSHARPCONTRACT)
@@ -744,6 +744,7 @@ public abstract class RANGE extends SUPERCLASS {
         #if defined(SCALAR) || defined(SCALARSEQ)
         String sort = "Int";
         #else
+        // pretty sure this doesn't happen
         String sort = "Real";
         #endif
         #if defined(SEQ)
@@ -751,6 +752,7 @@ public abstract class RANGE extends SUPERCLASS {
         #else
         return "decl: (declare-const %var1% " + sort + ") inv: (= (mod %var1% 2) 0)";
         #endif
+        return format_unimplemented(format);
       }
       if (format == OutputFormat.CSHARPCONTRACT)
         return "%var1% % 2 == 0";
