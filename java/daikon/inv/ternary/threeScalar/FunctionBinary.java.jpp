@@ -490,6 +490,11 @@ public abstract class CLASSNAME extends SUPERCLASS {
     int var_order = get_var_order();
     String[] methodname = get_method_name();
     VarInfo[] vis = ppt.var_infos;
+#if defined(TYPELONG)
+    String sort = "Int";
+#elif defined(TYPEDOUBLE)
+    String sort = "Real";
+#endif
 
     String result = vis[var_indices[var_order][0]].smtlibv2_name();
     String arg1 =   vis[var_indices[var_order][1]].smtlibv2_name();
@@ -520,7 +525,9 @@ public abstract class CLASSNAME extends SUPERCLASS {
     if (func == null)
       return "SMTLIBv2 doesn't know function " + methodname[0] + "-" +
         methodname[1] + "-" + methodname[2];
-    return "(EQ " + result + " (" + func + " " + arg1 + " " + arg2 + "))";
+    return "decl: (declare-const " + result + " " + sort + ") (declare-const "
+          + arg1 + " " + sort + ") (declare-const " + arg2 + " " + sort + 
+          ") inv: (= " + result + " (" + func + " " + arg1 + " " + arg2 + "))";
   }
 
 

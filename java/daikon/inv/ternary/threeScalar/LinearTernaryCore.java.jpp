@@ -1268,7 +1268,7 @@ public final class CLASSNAME
       // str_b = Invariant.simplify_format_double(db);
       // str_c = Invariant.simplify_format_double(dc);
       // str_d = Invariant.simplify_format_double(dd);
-      return "(AND)"; // really s/b format_unimplemented
+      return "(and)"; // really s/b format_unimplemented
     } else {
       // integer TODO: update to SMTLIBV2 format, don't think it makes a huge difference
       str_a = Invariant.simplify_format_long(ia);
@@ -1293,7 +1293,9 @@ public final class CLASSNAME
     String str_axPbyPczPd = (dd == 0.0) ? str_axPbyPcz :
       "(+ " + str_axPbyPcz + " " + str_d + ")";
     return 
-      "decl: (declare-const " + str_x + " " + sort + ") (declare-const " + str_y + " " + sort + ") (declare-const " + str_z + ") inv: (= 0 " + str_axPbyPczPd + ")";
+      "decl: (declare-const " + str_x + " " + sort + ") (declare-const " 
+       + str_y + " " + sort + ") (declare-const " + str_z + ") inv: (= 0 " 
+       + str_axPbyPczPd + ")";
   }
 
   /*@SideEffectFree*/ public String format_using(OutputFormat format,
