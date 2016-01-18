@@ -730,6 +730,8 @@ public abstract /*@Interned*/ class VarInfoName
         if (prestate) {
           s = "orig(" + s + ")";
         }
+        // replace array index things to be consistent
+        s = s.replace ("[..]", "[]");
         return "|" + s + "|";
       }
     
