@@ -306,17 +306,20 @@ public final class SEQINTEQUAL
 
   public String format_smtlibv2() {
     // TODO: have more confidence in smtlibv2_quantify...
-    //String[] form = VarInfo.smtlibv2_quantify (seqvar(), sclvar());
+    String[] form = VarInfo.smtlibv2_quantify (seqvar(), sclvar());
     #if defined(SCALAR)
     String sort = "Int";
     #else
     String sort = "Real";
     #endif
-    return "decl: (declare-const " + seqvar().smtlibv2_name() + " (Array Int " + sort + ")) " +
-      "(declare-const " + sclvar().smtlibv2_name() + " " + sort + 
-      ") inv: (forall ((Int i)) (implies (and (<= 0 i) (< i (arrayLength " 
-      + seqvar().smtlibv2_name() +"))) (" + EQUALSSMTstring + " (select " 
-       + seqvar().smtlibv2_name() + " i) " + sclvar().smtlibv2_name() + ")))";
+     return "decl: (declare-const " + seqvar().smtlibv2_name() + " (Array Int " + sort + ")) " +
+     "(declare-const " + sclvar().smtlibv2_name() + " " + sort + ") inv: " + form[0] + "(" + EQUALSSMTstring 
+      + " " + form[1] + " " + form[2] + ")" + form[3];
+    //return "decl: (declare-const " + seqvar().smtlibv2_name() + " (Array Int " + sort + ")) " +
+    //  "(declare-const " + sclvar().smtlibv2_name() + " " + sort + 
+    //  ") inv: (forall ((Int i)) (implies (and (<= 0 i) (< i (arrayLength " 
+     // + seqvar().smtlibv2_name() +"))) (" + EQUALSSMTstring + " (select " 
+     //  + seqvar().smtlibv2_name() + " i) " + sclvar().smtlibv2_name() + ")))";
    
   }
 
