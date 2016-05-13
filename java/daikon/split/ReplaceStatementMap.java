@@ -16,16 +16,16 @@ class ReplaceStatementMap {
   /**
    * Contains the ReplaceStatements of this, indexed by their names
    */
-  private Map<String,ReplaceStatement> map;
+  private Map<String, ReplaceStatement> map;
 
   /**
    * Creates a new instance of ReplaceStatementMap of the replaceStatements
    * of replaceStatements.
    * @param replaceStatements a list of ReplaceStatements that specifies the
-   *  the ReplaceStatements of this.
+   *  the ReplaceStatements of this
    */
   ReplaceStatementMap(List<ReplaceStatement> replaceStatements) {
-    map = new HashMap<String,ReplaceStatement>();
+    map = new HashMap<String, ReplaceStatement>();
     for (ReplaceStatement replaceStatement : replaceStatements) {
       map.put(replaceStatement.getName(), replaceStatement);
     }
@@ -40,7 +40,7 @@ class ReplaceStatementMap {
    * a "dot".)  For example if this contains entries with names "c", "b.c"
    * and "x.y.z", "get(c)" would return "c", "get(a.b.c)" would return "b.c"
    * and "get(y.z)" would return null.
-   * @param name the name of the ReplaceStatement desired.
+   * @param name the name of the ReplaceStatement desired
    */
   public /*@Nullable*/ ReplaceStatement get(String name) {
     ReplaceStatement rs = map.get(name);
@@ -62,5 +62,4 @@ class ReplaceStatementMap {
   /*@SideEffectFree*/ public String toString() {
     return map.toString();
   }
-
 }

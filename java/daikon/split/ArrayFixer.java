@@ -1,10 +1,10 @@
 package daikon.split;
 
-import jtb.syntaxtree.*;
-import jtb.visitor.*;
 import daikon.*;
 import daikon.tools.jtb.*;
 import jtb.ParseException;
+import jtb.syntaxtree.*;
+import jtb.visitor.*;
 
 /*>>>
 import org.checkerframework.checker.nullness.qual.*;
@@ -58,7 +58,7 @@ class ArrayFixer extends DepthFirstVisitor {
   /**
    * Creates a new instance of ArrayFixer.
    * @param vars is a list of strings
-   *    of possible names of the variables in the condition.
+   *    of possible names of the variables in the condition
    * @param varInfos is a list of the corresponding VarInfos for each of the names
    *    in vars.
    */
@@ -74,14 +74,14 @@ class ArrayFixer extends DepthFirstVisitor {
    * varInfos is the VarInfo for the ith element of names.
    * @param expression a valid segment of java code
    * @param names is a List of Strings that are the names of all the variables
-   *    in statement.
+   *    in statement
    * @param varInfos is a List of VarInfos for all the variables named in names.
    * @return condition with all variable referring to arrays suffixed with
    *   "_identity" or "_array" as needed.
    * @throws ParseException when condition is not a valid segment of java code
    */
   public static String fixArrays(String expression, String[] names, VarInfo[] varInfos)
-   throws ParseException {
+      throws ParseException {
     Node root = Visitors.getJtbTree(expression);
     ArrayFixer fixer = new ArrayFixer(names, varInfos);
     root.accept(fixer);
@@ -93,10 +93,10 @@ class ArrayFixer extends DepthFirstVisitor {
    * Fixes the arrays found in statement (see class description).
    * names and varInfos must be in same order s.t. the ith element of
    * varInfos is the VarInfo for the ith element of names.
-   * @param root the root of a jtb syntax tree.
+   * @param root the root of a jtb syntax tree
    * @param names is a List of Strings that are the names of all the variables
    *    in statement.
-   * @param varInfos is a List of VarInfos for all the variables named in names.
+   * @param varInfos is a List of VarInfos for all the variables named in names
    * @return condition with all variable referring to arrays suffixed with
    *   "_identity" or "_array" as needed.
    */
@@ -112,17 +112,16 @@ class ArrayFixer extends DepthFirstVisitor {
    * Adds "_identity" or "_array" if needed at this node token.
    */
   public void visit(NodeToken n) {
-    if (lastTokenMayBeIdentity &&
-        (! (Visitors.isLBracket(n) || Visitors.isDot(n)))) {
-      assert lastToken != null : "@AssumeAssertion(nullness): dependent: because lastTokenMayBeIdentity == true";
+    if (lastTokenMayBeIdentity && (!(Visitors.isLBracket(n) || Visitors.isDot(n)))) {
+      assert lastToken != null
+          : "@AssumeAssertion(nullness): dependent: because lastTokenMayBeIdentity == true";
       lastToken.tokenImage = lastToken.tokenImage + "_identity";
       lastToken.endColumn = lastToken.endColumn + 9;
       columnshift = columnshift + 9;
       columnshiftline = lastToken.beginLine;
-    }
-    else if (lastTokenMayBeElements &&
-             (Visitors.isLBracket(n) || Visitors.isDot(n))) {
-      assert lastToken != null : "@AssumeAssertion(nullness): dependent: because lastTokenMayBeElements == true";
+    } else if (lastTokenMayBeElements && (Visitors.isLBracket(n) || Visitors.isDot(n))) {
+      assert lastToken != null
+          : "@AssumeAssertion(nullness): dependent: because lastTokenMayBeElements == true";
       lastToken.tokenImage = lastToken.tokenImage + "_array";
       lastToken.endColumn = lastToken.endColumn + 6;
       columnshift = columnshift + 6;
@@ -138,8 +137,7 @@ class ArrayFixer extends DepthFirstVisitor {
             if (varName.equals(n.tokenImage)) {
               lastTokenMayBeIdentity = true;
             }
-          }
-          else if (varName.equals(n.tokenImage)) {
+          } else if (varName.equals(n.tokenImage)) {
             lastTokenMayBeElements = true;
           }
         }
@@ -148,8 +146,7 @@ class ArrayFixer extends DepthFirstVisitor {
     if (n.beginLine == columnshiftline) {
       n.beginColumn = n.beginColumn + columnshift;
       n.endColumn = n.endColumn + columnshift;
-    }
-    else {
+    } else {
       columnshift = 0;
       columnshiftline = -1;
     }
@@ -158,12 +155,12 @@ class ArrayFixer extends DepthFirstVisitor {
 
   private void fixLastToken() {
     if (lastTokenMayBeIdentity) {
-      assert lastToken != null : "@AssumeAssertion(nullness): dependent: because lastTokenMayBeIdentity == true";
+      assert lastToken != null
+          : "@AssumeAssertion(nullness): dependent: because lastTokenMayBeIdentity == true";
       lastToken.tokenImage = lastToken.tokenImage + "_identity";
       lastToken.endColumn = lastToken.endColumn + 9;
       columnshift = columnshift + 9;
       columnshiftline = lastToken.beginLine;
     }
   }
-
 }

@@ -83,7 +83,7 @@ public class CLASSNAME
   /**
    * Boolean.  True iff LinearTernary invariants should be considered.
    **/
-  public static boolean dkconfig_enabled = true;
+  public static boolean dkconfig_enabled = Invariant.invariantEnabledDefault;
 
   public static final boolean debugLinearTernary = false;
   // public static final boolean debugLinearTernary = true;
@@ -116,14 +116,15 @@ public class CLASSNAME
   /** LinearTernary is only valid on non-constant integral types **/
   public boolean instantiate_ok (VarInfo[] vis) {
 
-    if (!valid_types (vis))
-      return (false);
+    if (!valid_types (vis)) {
+      return false;
+    }
 
     // make sure the variables are integral
     if (!vis[0].file_rep_type.IS_INTEGRAL
         || !vis[1].file_rep_type.IS_INTEGRAL
         || !vis[2].file_rep_type.IS_INTEGRAL)
-      return (false);
+      return false;
 
     // Don't create if any of the variables are constant.
     // DynamicConstants will create this from LinearBinary
@@ -132,7 +133,7 @@ public class CLASSNAME
     if (NIS.dkconfig_enabled && (parent.is_constant (vis[0])
                                  || parent.is_constant(vis[1])
                                  || parent.is_constant (vis[2])))
-      return (false);
+      return false;
 
     /*
     // JHP: This code is removed because these sorts of static checks
@@ -291,7 +292,7 @@ public class CLASSNAME
     }
     */
 
-    return (true);
+    return true;
   }
 
   /** Instantiate the invariant on the specified slice **/
@@ -391,8 +392,9 @@ public class CLASSNAME
   public static /*@Nullable*/ CLASSNAME find(PptSlice ppt) {
     assert ppt.arity() == 3;
     for (Invariant inv : ppt.invs) {
-      if (inv instanceof CLASSNAME)
+      if (inv instanceof CLASSNAME) {
         return (CLASSNAME) inv;
+      }
     }
     return null;
   }
@@ -420,9 +422,9 @@ public class CLASSNAME
    * Merge the invariants in invs to form a new invariant.  Each must be
    * a CLASSNAME invariant.  The work is done by the LinearTernary core
    *
-   * @param invs        List of invariants to merge.  They should all be
+   * @param invs        list of invariants to merge.  They should all be
    *                    permuted to match the variable order in parent_ppt.
-   * @param parent_ppt  Slice that will contain the new invariant
+   * @param parent_ppt  slice that will contain the new invariant
    */
   public /*@Nullable*/ Invariant merge (List<Invariant> invs, PptSlice parent_ppt) {
 
@@ -435,8 +437,9 @@ public class CLASSNAME
     // Merge the cores and build a new invariant containing the merged core
     CLASSNAME result = new CLASSNAME (parent_ppt);
     CORECLASS newcore = core.merge (cores, result);
-    if (newcore == null)
+    if (newcore == null) {
       return (null);
+    }
     result.core = newcore;
     return (result);
   }

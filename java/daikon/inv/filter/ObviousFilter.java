@@ -7,27 +7,29 @@ import org.checkerframework.checker.nullness.qual.*;
 */
 
 public class ObviousFilter extends InvariantFilter {
-  public String getDescription() { return "Suppress obvious invariants"; }
+  public String getDescription() {
+    return "Suppress obvious invariants";
+  }
 
   /**
    * Boolean. If true, ObviousFilter is initially turned on.
    */
   public static boolean dkconfig_enabled = true;
 
-  public ObviousFilter () {
+  public ObviousFilter() {
     isOn = dkconfig_enabled;
   }
 
-
   @SuppressWarnings("nullness") // condition hidden in local variable
   /*@EnsuresNonNullIf(result=true, expression="#1.isObvious()")*/
-  boolean shouldDiscardInvariant( Invariant invariant ) {
+  boolean shouldDiscardInvariant(Invariant invariant) {
     // if ((invariant.ppt.arity() == 1) || IsEqualityComparison.it.accept(invariant)) {
     DiscardInfo discard = invariant.isObvious();
-    if (discard != null)
-      invariant.log ("discard because %s", discard.discardString());
+    if (discard != null) {
+      invariant.log("discard because %s", discard.discardString());
+    }
     return (discard != null);
-      /* }
+    /* }
     else {
       // if y cmp f(x_0,x_1, ..., x_n) and x_n is a constant, then we can
       // write y cmp f'(x_0,x_1,...,x_n-1), so we loop through the var_infos
@@ -41,20 +43,24 @@ public class ObviousFilter extends InvariantFilter {
           int num_elts = -1;
           if (var.type.isIntegral()) {
             oo = OneOfScalar.find(slice);
-            if (oo != null)
+            if (oo != null) {
               num_elts = ((OneOfScalar) oo).num_elts();
+              }
           } else if (var.type.isFloat()) {
             oo = OneOfFloat.find(slice);
-            if (oo != null)
+            if (oo != null) {
               num_elts = ((OneOfFloat) oo).num_elts();
+              }
           } else if (var.type.baseIsIntegral()) {
             oo = EltOneOf.find(slice);
-            if (oo != null)
+            if (oo != null) {
               num_elts = ((EltOneOf) oo).num_elts();
+              }
           } else if (var.type.baseIsFloat()) {
               oo = EltOneOfFloat.find(slice);
-              if (oo != null)
+              if (oo != null) {
                 num_elts = ((EltOneOfFloat) oo).num_elts();
+                }
           }
           if ((oo != null) && (num_elts == 1)) {
             invariant.discardCode = DiscardCode.obvious;

@@ -229,7 +229,7 @@ public class LOWERBOUND
   /**
    * Boolean.  True iff LOWERBOUND invariants should be considered.
    **/
-  public static boolean dkconfig_enabled = true;
+  public static boolean dkconfig_enabled = Invariant.invariantEnabledDefault;
   /**
    * Long integer.  Together with the corresponding
    * <code>maximal_interesting</code> parameter, specifies the
@@ -283,8 +283,9 @@ public class LOWERBOUND
   /** LOWERBOUND is only valid on integral types **/
   public boolean instantiate_ok (VarInfo[] vis) {
 
-    if (!valid_types (vis))
-      return (false);
+    if (!valid_types (vis)) {
+      return false;
+    }
 
     return (vis[0].file_rep_type.BASE_IS_INTEGRAL);
     }
@@ -328,8 +329,9 @@ public class LOWERBOUND
             // If variable is a double, then use fuzzy comparison
             if (vi.rep_type == ProglangType.DOUBLE) {
               Double constantVal = (Double)vi.constantValue();
-              if (Global.fuzzy.eq(constantVal, MIN1) || (Double.isNaN(constantVal) && Double.isNaN(MIN1)))
+              if (Global.fuzzy.eq(constantVal, MIN1) || (Double.isNaN(constantVal) && Double.isNaN(MIN1))) {
                 return name + " " + GTESTR + " " + vi.name();
+              }
             }
             // Otherwise just use the equals method
             else {
@@ -397,8 +399,9 @@ public class LOWERBOUND
           // If variable is a double, then use fuzzy comparison
           if (vi.rep_type == ProglangType.DOUBLE) {
             Double constantVal = (Double)vi.constantValue();
-            if (Global.fuzzy.eq(constantVal, MIN1) || (Double.isNaN(constantVal) && Double.isNaN(MIN1)))
+            if (Global.fuzzy.eq(constantVal, MIN1) || (Double.isNaN(constantVal) && Double.isNaN(MIN1))) {
               return name + " " + GTESTR + " " + vi.name();
+            }
           }
           // Otherwise just use the equals method
           else {
@@ -812,8 +815,9 @@ public class LOWERBOUND
      * empty. */
 #else
     if (other instanceof UPPERBOUND) {
-      if (MIN() GT ((UPPERBOUND) other).MAX())
+      if (MIN() GT ((UPPERBOUND) other).MAX()) {
         return true;
+      }
     }
 #endif
     if (other instanceof ONEOFSCALAR) {
@@ -826,8 +830,9 @@ public class LOWERBOUND
   public static /*@Nullable*/ LOWERBOUND find(PptSlice ppt) {
     assert ppt.arity() == 1;
     for (Invariant inv : ppt.invs) {
-      if (inv instanceof LOWERBOUND)
+      if (inv instanceof LOWERBOUND) {
         return (LOWERBOUND) inv;
+      }
     }
     return null;
   }
@@ -837,7 +842,7 @@ public class LOWERBOUND
    * formula at an upper point.  See merge() below.
    */
   public boolean mergeFormulasOk() {
-    return (true);
+    return true;
   }
 
   /**
@@ -846,12 +851,12 @@ public class LOWERBOUND
    * in each invariant, applies them to a new parent invariant and
    * returns the merged invariant (if any).
    *
-   * @param invs        List of invariants to merge.  The invariants must all
+   * @param invs        list of invariants to merge.  The invariants must all
    *                    be of the same type and should come from the
    *                    children of parent_ppt.  They should also all
    *                    be permuted to match the variable order in
    *                    parent_ppt.
-   * @param parent_ppt  Slice that will contain the new invariant
+   * @param parent_ppt  slice that will contain the new invariant
    */
   public /*@Nullable*/ Invariant merge (List<Invariant> invs, PptSlice parent_ppt) {
 

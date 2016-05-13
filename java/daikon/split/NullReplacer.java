@@ -1,9 +1,9 @@
 package daikon.split;
 
-import jtb.syntaxtree.*;
-import jtb.visitor.*;
 import daikon.tools.jtb.*;
 import jtb.ParseException;
+import jtb.syntaxtree.*;
+import jtb.visitor.*;
 
 /**
  * NullReplacer is a jtb syntax tree visitor that replaces all instances
@@ -12,7 +12,6 @@ import jtb.ParseException;
  * of the string "null".
  */
 class NullReplacer extends DepthFirstVisitor {
-
 
   private int columnshift = 0;
   private int columnshiftline = -1;
@@ -30,13 +29,12 @@ class NullReplacer extends DepthFirstVisitor {
 
   /**
    * Replaces all instance of "null" with "0".
-   * @param expression a valid java expression.
+   * @param expression a valid java expression
    * @return expression with all instances of null replaced by
    *  instances of "0".
    * @throws ParseException if expression is not a valid java expression.
    */
-  public static String replaceNull(String expression)
-    throws ParseException {
+  public static String replaceNull(String expression) throws ParseException {
     Node root = Visitors.getJtbTree(expression);
     NullReplacer replacer = new NullReplacer();
     root.accept(replacer);
@@ -46,7 +44,7 @@ class NullReplacer extends DepthFirstVisitor {
   /**
    * Replaces all instance of "null" with "0" in the JTB syntax tree rooted
    * at root..
-   * @param root a JTB syntax tree.
+   * @param root a JTB syntax tree
    */
   public static void replaceNull(Node root) {
     NullReplacer replacer = new NullReplacer();
@@ -73,5 +71,4 @@ class NullReplacer extends DepthFirstVisitor {
     }
     n.endColumn = n.endColumn + columnshift;
   }
-
 }

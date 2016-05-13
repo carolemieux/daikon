@@ -1,16 +1,15 @@
 package daikon.split;
 
-import jtb.*;
-import jtb.syntaxtree.*;
-import jtb.visitor.*;
 import daikon.tools.jtb.*;
 import java.io.*;
 import java.util.*;
+import jtb.*;
+import jtb.syntaxtree.*;
+import jtb.visitor.*;
 
 /*>>>
 import org.checkerframework.dataflow.qual.*;
 */
-
 
 /**
  * ReplaceStatement is an immutable data structure for holding
@@ -56,8 +55,7 @@ class ReplaceStatement {
    *  java method declaration (with the exception of package name like
    *  prefixes.
    */
-  public ReplaceStatement(String methodDeclaration, String returnStatement)
-    throws ParseException {
+  public ReplaceStatement(String methodDeclaration, String returnStatement) throws ParseException {
     methodName = "";
     this.returnStatement = returnStatement;
     // Must remove any prefixes of the method name so that the java parser
@@ -78,7 +76,8 @@ class ReplaceStatement {
     // But also seems to depend on methodName being set already...
     root.accept(visitor);
     assert methodName != null;
-    assert parameters != null : "@AssumeAssertion(nullness) : initialization via helper method (visitor pattern)";
+    assert parameters != null
+        : "@AssumeAssertion(nullness) : initialization via helper method (visitor pattern)";
   }
 
   /**
@@ -153,10 +152,10 @@ class ReplaceStatement {
   static public class MethodParameter {
     public String type;
     public String name;
+
     public MethodParameter(String name, String type) {
       this.name = name;
       this.type = type;
     }
   }
-
 }

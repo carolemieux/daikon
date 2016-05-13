@@ -64,7 +64,7 @@ public class CLASSNAME
   /**
    * Boolean.  True iff PairwiseLinearBinary invariants should be considered.
    **/
-  public static boolean dkconfig_enabled = true;
+  public static boolean dkconfig_enabled = Invariant.invariantEnabledDefault;
 
   public CORECLASS core;
 
@@ -224,9 +224,9 @@ public class CLASSNAME
    * Merge the invariants in invs to form a new invariant.  Each must be
    * a CLASSNAME invariant.  The work is done by the LinearBinary core
    *
-   * @param invs        List of invariants to merge.  They should all be
+   * @param invs        list of invariants to merge.  They should all be
    *                    permuted to match the variable order in parent_ppt.
-   * @param parent_ppt  Slice that will contain the new invariant
+   * @param parent_ppt  slice that will contain the new invariant
    */
   public /*@Nullable*/ Invariant merge (List<Invariant> invs, PptSlice parent_ppt) {
 
@@ -239,8 +239,9 @@ public class CLASSNAME
     // Merge the cores and build a new invariant containing the merged core
     CLASSNAME result = new CLASSNAME (parent_ppt);
     CORECLASS newcore = core.merge (cores, result);
-    if (newcore == null)
+    if (newcore == null) {
       return (null);
+    }
     result.core = newcore;
     return (result);
   }

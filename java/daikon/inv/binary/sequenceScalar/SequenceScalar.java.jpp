@@ -74,12 +74,13 @@ public abstract class CLASSNAME extends BinaryInvariant {
    */
   public boolean valid_types (VarInfo[] vis) {
 
-    if (vis.length != 2)
-      return (false);
+    if (vis.length != 2) {
+      return false;
+    }
 
     if (!vis[0].file_rep_type.BASE_IS_SCALAR
         || !vis[1].file_rep_type.BASE_IS_SCALAR)
-      return (false);
+      return false;
 
     return ((vis[0].file_rep_type.isArray() && !vis[1].file_rep_type.isArray())
           || !vis[0].file_rep_type.isArray() && vis[1].file_rep_type.isArray());
@@ -98,17 +99,18 @@ public abstract class CLASSNAME extends BinaryInvariant {
    * first, this is essentially symmetric.  Subclasses can override if necessary
    */
   /*@Pure*/ public boolean is_symmetric() {
-    return (true);
+    return true;
   }
 
    // Check if swap occurred and call one of the other two methods
   protected Invariant resurrect_done(int[] permutation) {
     assert permutation.length == 2;
     // assert ArraysMDE.fn_is_permutation(permutation);
-    if (permutation[0] == 1)
+    if (permutation[0] == 1) {
       return resurrect_done_swapped();
-    else
+    } else {
       return resurrect_done_unswapped();
+    }
   }
 
    /**

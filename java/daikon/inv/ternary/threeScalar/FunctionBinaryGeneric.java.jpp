@@ -61,7 +61,7 @@
 
 
 /**
- * Represents the invariant <code>resultvar = FUNCTION (arg1, arg2)</code>
+ * Represents the invariant <code>resultvar = FUNCTION(arg1, arg2)</code>
  * over three PRIMITIVE scalars.
  * EXTRA_INV_DOC
  */
@@ -126,30 +126,34 @@ public static class CNAME(FUNCTION,PERM_NAME) extends CLASSNAME {
 
   /*@Pure*/ public boolean is_symmetric() {
     #ifdef SYMMETRIC
-      return (true);
+      return true;
     #else
-      return (false);
+      return false;
     #endif
   }
 
   public PRIMITIVE func (PRIMITIVE arg1, PRIMITIVE arg2) {
     #ifdef ARG1_BOUND
-      if ((arg1 < arg1_bound[0]) || (arg1 > arg1_bound[1]))
+      if ((arg1 < arg1_bound[0]) || (arg1 > arg1_bound[1])) {
         throw new ArithmeticException ("arg1 (" + arg1 + ") out of range "
                                        + arg1_bound[0] + ".." + arg1_bound[1]);
+      }
     #endif
 
     #ifdef ARG2_BOUND
-      if ((arg2 < arg2_bound[0]) || (arg2 > arg2_bound[1]))
+      if ((arg2 < arg2_bound[0]) || (arg2 > arg2_bound[1])) {
         throw new ArithmeticException ("arg2 (" + arg2 + ") out of range "
                                        + arg2_bound[0] + ".." + arg2_bound[1]);
+      }
     #endif
 
     #ifdef BOOLEAN_ARGS
-      if ((arg1 < 0) || (arg1 > 1))
+      if ((arg1 < 0) || (arg1 > 1)) {
         throw new ArithmeticException ("arg1 (" + arg1 + ") is not boolean ");
-      if ((arg2 < 0) || (arg2 > 1))
+      }
+      if ((arg2 < 0) || (arg2 > 1)) {
         throw new ArithmeticException ("arg2 (" + arg2 + ") is not boolean ");
+      }
     #endif
 
     return (FUNC(arg1, arg2));
@@ -162,13 +166,14 @@ public static class CNAME(FUNCTION,PERM_NAME) extends CLASSNAME {
 
   public InvariantStatus add_modified(PRIMITIVE x, PRIMITIVE y,
                                       PRIMITIVE z, int count) {
-    if (Debug.logDetail())
+    if (Debug.logDetail()) {
       log ("result=%s, arg1=%s, arg2=%s", resultvar, arg1, arg2);
+    }
     return (add_ordered (resultvar, arg1, arg2, count));
   }
 
   /*@Pure*/ public boolean is ## FUNCTION() {
-    return (true);
+    return true;
   }
 
   #ifdef EXACT
@@ -180,10 +185,11 @@ public static class CNAME(FUNCTION,PERM_NAME) extends CLASSNAME {
    */
   /*@Pure*/
   public /*@Nullable*/ NISuppressionSet get_ni_suppressions() {
-    if (NIS.dkconfig_enabled && dkconfig_enabled)
+    if (NIS.dkconfig_enabled && dkconfig_enabled) {
       return (suppressions);
-    else
+    } else {
       return (null);
+    }
   }
 
   /** definition of this invariant (the suppressee) **/

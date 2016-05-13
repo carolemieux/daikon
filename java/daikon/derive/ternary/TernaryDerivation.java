@@ -2,7 +2,6 @@ package daikon.derive.ternary;
 
 import daikon.*;
 import daikon.derive.*;
-
 import plume.*;
 
 /*>>>
@@ -13,10 +12,7 @@ import org.checkerframework.dataflow.qual.*;
  * Abstract class to represent a derived variable that came from
  * three base variables.
  **/
-
-public abstract class TernaryDerivation
-  extends Derivation
-{
+public abstract class TernaryDerivation extends Derivation {
   // We are Serializable, so we specify a version to allow changes to
   // method signatures without breaking serialization.  If you add or
   // remove fields, you should change this number to the current date.
@@ -55,15 +51,19 @@ public abstract class TernaryDerivation
   }
 
   /*@SideEffectFree*/ public VarInfo[] getBases() {
-    return new VarInfo[] { base1, base2, base3 };
+    return new VarInfo[] {base1, base2, base3};
   }
 
   /*@Pure*/ public VarInfo getBase(int i) {
     switch (i) {
-    case 0: return base1;
-    case 1: return base2;
-    case 2: return base3;
-    default: throw new Error("bad base: " + i);
+      case 0:
+        return base1;
+      case 1:
+        return base2;
+      case 2:
+        return base3;
+      default:
+        throw new Error("bad base: " + i);
     }
   }
 
@@ -81,10 +81,8 @@ public abstract class TernaryDerivation
     return (base1.isParam() || base2.isParam() || base3.isParam());
   }
 
-
   public int derivedDepth() {
-    return 1 + Math.max(base1.derivedDepth(),
-                        Math.max(base2.derivedDepth(), base3.derivedDepth()));
+    return 1 + Math.max(base1.derivedDepth(), Math.max(base2.derivedDepth(), base3.derivedDepth()));
   }
 
   public boolean canBeMissing() {
@@ -93,8 +91,6 @@ public abstract class TernaryDerivation
 
   /*@Pure*/ public boolean isDerivedFromNonCanonical() {
     // We insist that both are canonical, not just one.
-    return !(base1.isCanonical() && base2.isCanonical()
-             && base3.isCanonical());
+    return !(base1.isCanonical() && base2.isCanonical() && base3.isCanonical());
   }
-
 }

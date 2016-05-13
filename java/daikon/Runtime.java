@@ -44,6 +44,7 @@ public final class Runtime {
   /// Fresh (unique) classname used to disambiguate overloaded method
   /// calls during instrumentation; is not instantiated or used.
   public static class Unique {}
+
   public static final /*@Nullable*/ Unique unique = null;
 
   ////////////////////////////////////////////////////////////////////////
@@ -54,9 +55,8 @@ public final class Runtime {
   public static class AbstractException extends Error {
     static final long serialVersionUID = 20020130L;
   }
-  public static final AbstractException abstractException =
-    new AbstractException();
 
+  public static final AbstractException abstractException = new AbstractException();
 
   ///////////////////////////////////////////////////////////////////////////
   /// Timestamps
@@ -66,7 +66,6 @@ public final class Runtime {
   // Uses of it should be synchronized (probably on dtrace).
   public static int time = 0;
 
-
   ///////////////////////////////////////////////////////////////////////////
   /// Classname utilities
   ///
@@ -74,7 +73,8 @@ public final class Runtime {
   // This section is lifted from plume/UtilMDE.java and should be kept
   // in synch with that version.
 
-  private static HashMap<String,String> primitiveClassesFromJvm = new HashMap<String,String>(8);
+  private static HashMap<String, String> primitiveClassesFromJvm = new HashMap<String, String>(8);
+
   static {
     primitiveClassesFromJvm.put("Z", "boolean");
     primitiveClassesFromJvm.put("B", "byte");
@@ -106,7 +106,8 @@ public final class Runtime {
    * This enables this method to be used on the output of {@link Class#getName()}.
    **/
   @SuppressWarnings("signature") // conversion function
-  public static /*@BinaryName*/ String fieldDescriptorToBinaryName(/*@FieldDescriptor*/ String classname) {
+  public static /*@BinaryName*/ String fieldDescriptorToBinaryName(
+      /*@FieldDescriptor*/ String classname) {
     int dims = 0;
     while (classname.startsWith("[")) {
       dims++;
@@ -123,12 +124,11 @@ public final class Runtime {
         result = classname;
       }
     }
-    for (int i=0; i<dims; i++) {
+    for (int i = 0; i < dims; i++) {
       result += "[]";
     }
     return result;
   }
-
 
   ///////////////////////////////////////////////////////////////////////////
   /// Printing
@@ -151,7 +151,6 @@ public final class Runtime {
   public static int printedRecords = 0;
   public static boolean dtraceLimitTerminate = false;
 
-
   // Inline this?  Probably not worth it.
   // Increment the number of records that have been printed.
   public static void incrementRecords() {
@@ -166,7 +165,7 @@ public final class Runtime {
     // The incrementRecords method (which calls this) is called inside a
     // synchronized block, but re-synchronize just to be sure, or in case
     // this is called from elsewhere.
-    synchronized ( daikon.Runtime.dtrace ) {
+    synchronized (daikon.Runtime.dtrace) {
       // The shutdown hook is synchronized on this, so close it up
       // ourselves, lest the call to System.exit cause deadlock.
       dtrace.println();
@@ -201,18 +200,19 @@ public final class Runtime {
   // @MonotonicNonNull would be more accurate, but annotated as @NonNull
   // because this is a library; control flow occurs at run time in generated
   // instrumented code that is not checkable by a source code typechecker.
-  @SuppressWarnings("nullness")   // set and used by run-time instrumentation
+  @SuppressWarnings("nullness") // set and used by run-time instrumentation
   public static PrintStream dtrace;
+
   public static boolean dtrace_closed = false;
   // daikon.Daikon should never load daikon.Runtime; but sometimes it
   // happens, due to reflective loading of the target program that gets the
   // instrumented target program.  The instrumented program has a static
   // block that invokes daikon.Runtime.
   public static boolean no_dtrace = false;
-    // This initializer doesn't work because findLoadedClass is a protected
-    // method, so instead make clients set no_dtrace explicitly.
-    // = (ClassLoader.getSystemClassLoader().findLoadedClass("daikon.Daikon")
-    //    != null);
+  // This initializer doesn't work because findLoadedClass is a protected
+  // method, so instead make clients set no_dtrace explicitly.
+  // = (ClassLoader.getSystemClassLoader().findLoadedClass("daikon.Daikon")
+  //    != null);
 
   /*@EnsuresNonNull("dtrace")*/
   public static void setDtrace(String filename, boolean append) {
@@ -226,9 +226,13 @@ public final class Runtime {
       if (parent != null) parent.mkdirs();
       OutputStream os = new FileOutputStream(filename, append);
       if (filename.endsWith(".gz")) {
-        if (append)
-          throw new Error("DTRACEAPPEND environment variable is set." + lineSep
-                          + "Cannot append to gzipped dtrace file " + filename);
+        if (append) {
+          throw new Error(
+              "DTRACEAPPEND environment variable is set."
+                  + lineSep
+                  + "Cannot append to gzipped dtrace file "
+                  + filename);
+        }
         os = new GZIPOutputStream(os);
       }
       dtraceLimit = Integer.getInteger("DTRACELIMIT", Integer.MAX_VALUE).intValue();
@@ -257,7 +261,7 @@ public final class Runtime {
    **/
   public static void setDtraceMaybe(String default_filename) {
     // System.out.println("setDtraceMaybe(" + default_filename + "); old = " + dtrace);
-    if ((dtrace == null) && (! no_dtrace)) {
+    if ((dtrace == null) && (!no_dtrace)) {
       // Jeremy used "daikon.dtrace.filename".
       String filename = System.getProperty("DTRACEFILE", default_filename);
       boolean append = System.getProperty("DTRACEAPPEND") != null;
@@ -268,9 +272,7 @@ public final class Runtime {
   private static boolean supportsAddShutdownHook() {
     try {
       Class<java.lang.Runtime> rt = java.lang.Runtime.class;
-      rt.getMethod("addShutdownHook", new Class<?>[] {
-        java.lang.Thread.class
-      });
+      rt.getMethod("addShutdownHook", new Class<?>[] {java.lang.Thread.class});
       return true;
     } catch (Exception e) {
       return false;
@@ -280,24 +282,26 @@ public final class Runtime {
   // Add a shutdown hook to close the PrintStream when the program
   // exits
   private static void addShutdownHook() {
-    java.lang.Runtime.getRuntime().addShutdownHook(new Thread() {
-        @Override
-        public void run() {
-          if (! dtrace_closed) {
+    java.lang.Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread() {
+              @Override
+              public void run() {
+                if (!dtrace_closed) {
 
-            // When the program being instrumented exits, the buffers
-            // of the "dtrace" (PrintStream) object are not flushed,
-            // so we miss the tail of the file.
+                  // When the program being instrumented exits, the buffers
+                  // of the "dtrace" (PrintStream) object are not flushed,
+                  // so we miss the tail of the file.
 
-            synchronized (daikon.Runtime.dtrace) {
-              dtrace.println();
-              // This lets us know we didn't lose any data.
-              dtrace.println("# EOF (added by daikon.Runtime.addShutdownHook)");
-              dtrace.close();
-            }
-          }
-        }
-      });
+                  synchronized (daikon.Runtime.dtrace) {
+                    dtrace.println();
+                    // This lets us know we didn't lose any data.
+                    dtrace.println("# EOF (added by daikon.Runtime.addShutdownHook)");
+                    dtrace.close();
+                  }
+                }
+              }
+            });
   }
 
   // This is no longer necessary, as it was for Daikon-jtb
@@ -309,7 +313,6 @@ public final class Runtime {
   //   throw new Error("Unreplaced call to DaikonRuntime.daikonPrint_dummy(" + x + ", " + ps + ", " + depth + ", " + prefix + ", " + target + ")");
   // }
 
-
   // Some of these functions could be open-coded, but I don't want to get
   // into the business of writing lots of bytecodes; let the JIT inline
   // them.
@@ -317,7 +320,6 @@ public final class Runtime {
   // The other advantage to dynamic generation is that it works for
   // arbitrary types, not just those hard-coded here.  That is a big
   // advantage.
-
 
   ///////////////////////////////////////////////////////////////////////////
   /// print
@@ -346,14 +348,15 @@ public final class Runtime {
   }
 
   public static final void println_modbit_modified(java.io.PrintStream ps) {
-    ps.println("1");          // "modified"
+    ps.println("1"); // "modified"
   }
 
   public static final void println_modbit_missing(java.io.PrintStream ps) {
-    ps.println("2");          // "nonsensical"
+    ps.println("2"); // "nonsensical"
   }
 
-  public static final void println_class_and_modbit(java.io.PrintStream ps, /*@Nullable*/ Object x) {
+  public static final void println_class_and_modbit(
+      java.io.PrintStream ps, /*@Nullable*/ Object x) {
     if (x == null) {
       ps.println("nonsensical");
       println_modbit_missing(ps);
@@ -364,7 +367,8 @@ public final class Runtime {
   }
 
   @SuppressWarnings("signature") // conversion method
-  public static final /*@BinaryName*/ String classGetNameToBinaryName(/*@ClassGetName*/ String cgn) {
+  public static final /*@BinaryName*/ String classGetNameToBinaryName(
+      /*@ClassGetName*/ String cgn) {
     if (cgn.startsWith("[")) {
       return fieldDescriptorToBinaryName(cgn);
     } else {
@@ -382,7 +386,8 @@ public final class Runtime {
     ps.print((x == null) ? "null" : "\"" + quote(x) + "\"");
   }
 
-  public static final void println_quoted_String_and_modbit(java.io.PrintStream ps, /*@Nullable*/ String x) {
+  public static final void println_quoted_String_and_modbit(
+      java.io.PrintStream ps, /*@Nullable*/ String x) {
     if (x == null) {
       ps.println("nonsensical");
       println_modbit_missing(ps);
@@ -393,7 +398,8 @@ public final class Runtime {
   }
 
   // Not yet used; but probably should be.
-  public static final void print_quoted_Character(java.io.PrintStream ps, /*@Nullable*/ Character ch) {
+  public static final void print_quoted_Character(
+      java.io.PrintStream ps, /*@Nullable*/ Character ch) {
     ps.print((ch == null) ? "null" : quote(ch));
   }
 
@@ -407,59 +413,56 @@ public final class Runtime {
     // should be copied out verbatim (until the next escaped character).
     int post_esc = 0;
     int orig_len = orig.length();
-    for (int i=0; i<orig_len; i++) {
+    for (int i = 0; i < orig_len; i++) {
       char c = orig.charAt(i);
       switch (c) {
-      case '\"':
-      case '\\':
-        if (post_esc < i) {
-          sb.append(orig.substring(post_esc, i));
-        }
-        sb.append('\\');
-        post_esc = i;
-        break;
-      case '\n':                // not lineSep
-        if (post_esc < i) {
-          sb.append(orig.substring(post_esc, i));
-        }
-        sb.append("\\n");       // not lineSep
-        post_esc = i+1;
-        break;
-      case '\r':
-        if (post_esc < i) {
-          sb.append(orig.substring(post_esc, i));
-        }
-        sb.append("\\r");
-        post_esc = i+1;
-        break;
-      default:
-        // Do nothing; i gets incremented.
+        case '\"':
+        case '\\':
+          if (post_esc < i) {
+            sb.append(orig.substring(post_esc, i));
+          }
+          sb.append('\\');
+          post_esc = i;
+          break;
+        case '\n': // not lineSep
+          if (post_esc < i) {
+            sb.append(orig.substring(post_esc, i));
+          }
+          sb.append("\\n"); // not lineSep
+          post_esc = i + 1;
+          break;
+        case '\r':
+          if (post_esc < i) {
+            sb.append(orig.substring(post_esc, i));
+          }
+          sb.append("\\r");
+          post_esc = i + 1;
+          break;
+        default:
+          // Do nothing; i gets incremented.
       }
     }
-    if (sb.length() == 0)
-      return orig;
+    if (sb.length() == 0) return orig;
     sb.append(orig.substring(post_esc));
     return sb.toString();
   }
-
 
   // The overhead of this is too high to call in quote(String)
   public static String quote(Character ch) {
     char c = ch.charValue();
     switch (c) {
-    case '\"':
-      return "\\\"";
-    case '\\':
-      return "\\\\";
-    case '\n':                  // not lineSep
-      return "\\n";             // not lineSep
-    case '\r':
-      return "\\r";
-    default:
-      return new String(new char[] { c });
+      case '\"':
+        return "\\\"";
+      case '\\':
+        return "\\\\";
+      case '\n': // not lineSep
+        return "\\n"; // not lineSep
+      case '\r':
+        return "\\r";
+      default:
+        return new String(new char[] {c});
     }
   }
-
 
   ///////////////////////////////////////////////////////////////////////////
   /// println
@@ -504,7 +507,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       print_Object(ps, a[0]);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         print_Object(ps, a[i]);
       }
@@ -521,7 +524,7 @@ public final class Runtime {
     int size = v.size();
     if (size > 0) {
       print_Object(ps, v.get(0));
-      for (int i=1; i<size; i++) {
+      for (int i = 1; i < size; i++) {
         ps.print(' ');
         print_Object(ps, v.get(i));
       }
@@ -531,7 +534,8 @@ public final class Runtime {
 
   // Print an array of the classes of the elements.
   @Deprecated
-  public static final void println_array_Object_eltclass(java.io.PrintStream ps, Object /*@Nullable*/ [] a) {
+  public static final void println_array_Object_eltclass(
+      java.io.PrintStream ps, Object /*@Nullable*/ [] a) {
     if (a == null) {
       ps.println("null");
       return;
@@ -539,7 +543,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       print_class(ps, a[0]);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         print_class(ps, a[i]);
       }
@@ -548,7 +552,8 @@ public final class Runtime {
   }
 
   // Print an array of the classes of the elements.
-  public static final void println_array_Object_eltclass_and_modbit(java.io.PrintStream ps, Object /*@Nullable*/ [] a) {
+  public static final void println_array_Object_eltclass_and_modbit(
+      java.io.PrintStream ps, Object /*@Nullable*/ [] a) {
     if (a == null) {
       ps.println("nonsensical");
       println_modbit_missing(ps);
@@ -559,7 +564,7 @@ public final class Runtime {
     if (a.length > 0) {
       print_class(ps, a[0]);
       any_null = (a[0] == null);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         print_class(ps, a[i]);
         any_null |= (a[i] == null);
@@ -571,7 +576,8 @@ public final class Runtime {
 
   // Print an array of the classes of the elements.
   @Deprecated
-  public static final void println_array_Object_eltclass(java.io.PrintStream ps, /*@Nullable*/ List<?> v) {
+  public static final void println_array_Object_eltclass(
+      java.io.PrintStream ps, /*@Nullable*/ List<?> v) {
     if (v == null) {
       ps.println("null");
       return;
@@ -580,7 +586,7 @@ public final class Runtime {
     int size = v.size();
     if (size > 0) {
       print_class(ps, v.get(0));
-      for (int i=1; i<size; i++) {
+      for (int i = 1; i < size; i++) {
         ps.print(' ');
         print_class(ps, v.get(i));
       }
@@ -589,7 +595,8 @@ public final class Runtime {
   }
 
   // Print an array of the classes of the elements.
-  public static final void println_array_Object_eltclass_and_modbit(java.io.PrintStream ps, /*@Nullable*/ List<?> v) {
+  public static final void println_array_Object_eltclass_and_modbit(
+      java.io.PrintStream ps, /*@Nullable*/ List<?> v) {
     if (v == null) {
       ps.println("nonsensical");
       println_modbit_missing(ps);
@@ -601,7 +608,7 @@ public final class Runtime {
     if (size > 0) {
       print_class(ps, v.get(0));
       any_null = (v.get(0) == null);
-      for (int i=1; i<size; i++) {
+      for (int i = 1; i < size; i++) {
         ps.print(' ');
         print_class(ps, v.get(i));
         any_null |= (v.get(i) == null);
@@ -619,7 +626,8 @@ public final class Runtime {
   // Print the lengths of the elements of the top-level array.
   // This is for Object[][] or for anything[][][], where "anything" may
   // be either Object or a base class.
-  public static final void println_array_2d_size(java.io.PrintStream ps, Object /*@Nullable*/ [][] a) {
+  public static final void println_array_2d_size(
+      java.io.PrintStream ps, Object /*@Nullable*/ [][] a) {
     if (a == null) {
       ps.println("null");
       return;
@@ -627,14 +635,13 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print(a[0] == null ? 0 : a[0].length);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print(a[i] == null ? 0 : a[i].length);
       }
     }
     ps.println(']');
   }
-
 
   ///
   /// List
@@ -651,7 +658,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print(a[0] == null ? 0 : a[0].size());
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print(a[i] == null ? 0 : a[i].size());
       }
@@ -659,23 +666,25 @@ public final class Runtime {
     ps.println(']');
   }
 
-  public static final void println_array_List_size(java.io.PrintStream ps, Object /*@Nullable*/ [] a) {
+  public static final void println_array_List_size(
+      java.io.PrintStream ps, Object /*@Nullable*/ [] a) {
     if (a == null) {
       ps.println("null");
       return;
     }
     ps.print('[');
     if (a.length > 0) {
-      ps.print(a[0] == null ? 0 : ((List<?>)a[0]).size());
-      for (int i=1; i<a.length; i++) {
+      ps.print(a[0] == null ? 0 : ((List<?>) a[0]).size());
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
-        ps.print(a[i] == null ? 0 : ((List<?>)a[i]).size());
+        ps.print(a[i] == null ? 0 : ((List<?>) a[i]).size());
       }
     }
     ps.println(']');
   }
 
-  public static final void println_array_List_size(java.io.PrintStream ps, /*@Nullable*/ List<List<?>> v) {
+  public static final void println_array_List_size(
+      java.io.PrintStream ps, /*@Nullable*/ List<List<?>> v) {
     if (v == null) {
       ps.println("null");
       return;
@@ -684,7 +693,7 @@ public final class Runtime {
     int size = v.size();
     if (size > 0) {
       ps.print(v.get(0) == null ? 0 : v.get(0).size());
-      for (int i=1; i<size; i++) {
+      for (int i = 1; i < size; i++) {
         ps.print(' ');
         ps.print(v.get(i) == null ? 0 : v.get(i).size());
       }
@@ -704,7 +713,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       print_quoted_String(ps, a[0]);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         print_quoted_String(ps, a[i]);
       }
@@ -719,16 +728,17 @@ public final class Runtime {
     }
     ps.print('[');
     if (a.length > 0) {
-      print_quoted_String(ps, (String)a[0]);
-      for (int i=1; i<a.length; i++) {
+      print_quoted_String(ps, (String) a[0]);
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
-        print_quoted_String(ps, (String)a[i]);
+        print_quoted_String(ps, (String) a[i]);
       }
     }
     ps.println(']');
   }
 
-  public static final void println_array_String(java.io.PrintStream ps, /*@Nullable*/ List<String> v) {
+  public static final void println_array_String(
+      java.io.PrintStream ps, /*@Nullable*/ List<String> v) {
     if (v == null) {
       ps.println("null");
       return;
@@ -737,7 +747,7 @@ public final class Runtime {
     int size = v.size();
     if (size > 0) {
       print_quoted_String(ps, v.get(0));
-      for (int i=1; i<size; i++) {
+      for (int i = 1; i < size; i++) {
         ps.print(' ');
         print_quoted_String(ps, v.get(i));
       }
@@ -756,7 +766,8 @@ public final class Runtime {
 
   /// boolean
 
-  public static final void println_array_boolean(java.io.PrintStream ps, boolean /*@Nullable*/ [] a) {
+  public static final void println_array_boolean(
+      java.io.PrintStream ps, boolean /*@Nullable*/ [] a) {
     if (a == null) {
       ps.println("null");
       return;
@@ -764,7 +775,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print(a[0]);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print(a[i]);
       }
@@ -779,16 +790,17 @@ public final class Runtime {
     }
     ps.print('[');
     if (a.length > 0) {
-      ps.print(((Boolean)a[0]).booleanValue());
-      for (int i=1; i<a.length; i++) {
+      ps.print(((Boolean) a[0]).booleanValue());
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
-        ps.print(((Boolean)a[i]).booleanValue());
+        ps.print(((Boolean) a[i]).booleanValue());
       }
     }
     ps.println(']');
   }
 
-  public static final void println_array_boolean(java.io.PrintStream ps, /*@Nullable*/ List<Boolean> v) {
+  public static final void println_array_boolean(
+      java.io.PrintStream ps, /*@Nullable*/ List<Boolean> v) {
     if (v == null) {
       ps.println("null");
       return;
@@ -797,7 +809,7 @@ public final class Runtime {
     int size = v.size();
     if (size > 0) {
       ps.print(v.get(0).booleanValue());
-      for (int i=1; i<size; i++) {
+      for (int i = 1; i < size; i++) {
         ps.print(' ');
         ps.print(v.get(i).booleanValue());
       }
@@ -806,7 +818,8 @@ public final class Runtime {
   }
 
   // Print the lengths of the elements of the top-level array.
-  public static final void println_array_2d_size(java.io.PrintStream ps, boolean /*@Nullable*/ [][] a) {
+  public static final void println_array_2d_size(
+      java.io.PrintStream ps, boolean /*@Nullable*/ [][] a) {
     if (a == null) {
       ps.println("null");
       return;
@@ -814,7 +827,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print((a[0]).length);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print((a[i]).length);
       }
@@ -832,7 +845,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print(a[0]);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print(a[i]);
       }
@@ -847,10 +860,10 @@ public final class Runtime {
     }
     ps.print('[');
     if (a.length > 0) {
-      ps.print(((Byte)a[0]).byteValue());
-      for (int i=1; i<a.length; i++) {
+      ps.print(((Byte) a[0]).byteValue());
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
-        ps.print(((Byte)a[i]).byteValue());
+        ps.print(((Byte) a[i]).byteValue());
       }
     }
     ps.println(']');
@@ -865,7 +878,7 @@ public final class Runtime {
     int size = v.size();
     if (size > 0) {
       ps.print(v.get(0).byteValue());
-      for (int i=1; i<size; i++) {
+      for (int i = 1; i < size; i++) {
         ps.print(' ');
         ps.print(v.get(i).byteValue());
       }
@@ -882,7 +895,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print((a[0]).length);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print((a[i]).length);
       }
@@ -904,7 +917,8 @@ public final class Runtime {
     println_array_char_as_chars(ps, v);
   }
 
-  public static final void println_array_char_as_String(java.io.PrintStream ps, char /*@Nullable*/ [] a) {
+  public static final void println_array_char_as_String(
+      java.io.PrintStream ps, char /*@Nullable*/ [] a) {
     if (a == null) {
       ps.println("null");
       return;
@@ -914,50 +928,53 @@ public final class Runtime {
 
   // Outputs a sequence of space-separated characters, with (only) return
   // and newline quoted.  (Should backslash also be quoted?)
-  public static final void println_array_char_as_chars(java.io.PrintStream ps, Object /*@Nullable*/ [] a) {
+  public static final void println_array_char_as_chars(
+      java.io.PrintStream ps, Object /*@Nullable*/ [] a) {
     if (a == null) {
       ps.println("null");
       return;
     }
     ps.print('[');
-    for (int i=0; i<a.length; i++) {
-      if (i != 0)
-        ps.print(' ');
-      char c = ((Character)a[0]).charValue();
-      if (c == '\r')
+    for (int i = 0; i < a.length; i++) {
+      if (i != 0) ps.print(' ');
+      char c = ((Character) a[0]).charValue();
+      if (c == '\r') {
         ps.print("\\r");
-      else if (c == '\n')       // not lineSep
-        ps.print("\\n");        // not lineSep
-      else
+      } else if (c == '\n') { // not lineSep
+        ps.print("\\n"); // not lineSep
+      } else {
         ps.print(c);
+      }
     }
     ps.println(']');
   }
 
   // Outputs a sequence of space-separated characters, with (only) return
   // and newline quoted.  (Should backslash also be quoted?)
-  public static final void println_array_char_as_chars(java.io.PrintStream ps, /*@Nullable*/ List<Character> v) {
+  public static final void println_array_char_as_chars(
+      java.io.PrintStream ps, /*@Nullable*/ List<Character> v) {
     if (v == null) {
       ps.println("null");
       return;
     }
     ps.print('[');
     int size = v.size();
-    for (int i=0; i<size; i++) {
-      if (i != 0)
-        ps.print(' ');
+    for (int i = 0; i < size; i++) {
+      if (i != 0) ps.print(' ');
       char c = v.get(i).charValue();
-      if (c == '\r')
+      if (c == '\r') {
         ps.print("\\r");
-      else if (c == '\n')       // not lineSep
-        ps.print("\\n");        // not lineSep
-      else
+      } else if (c == '\n') { // not lineSep
+        ps.print("\\n"); // not lineSep
+      } else {
         ps.print(c);
+      }
     }
     ps.println(']');
   }
 
-  public static final void println_array_char_as_ints(java.io.PrintStream ps, char /*@Nullable*/ [] a) {
+  public static final void println_array_char_as_ints(
+      java.io.PrintStream ps, char /*@Nullable*/ [] a) {
     if (a == null) {
       ps.println("null");
       return;
@@ -965,7 +982,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print(Character.getNumericValue(a[0]));
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print(Character.getNumericValue(a[i]));
       }
@@ -973,23 +990,25 @@ public final class Runtime {
     ps.println(']');
   }
 
-  public static final void println_array_char_as_ints(java.io.PrintStream ps, Object /*@Nullable*/ [] a) {
+  public static final void println_array_char_as_ints(
+      java.io.PrintStream ps, Object /*@Nullable*/ [] a) {
     if (a == null) {
       ps.println("null");
       return;
     }
     ps.print('[');
     if (a.length > 0) {
-      ps.print(Character.getNumericValue(((Character)a[0]).charValue()));
-      for (int i=1; i<a.length; i++) {
+      ps.print(Character.getNumericValue(((Character) a[0]).charValue()));
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
-        ps.print(Character.getNumericValue(((Character)a[i]).charValue()));
+        ps.print(Character.getNumericValue(((Character) a[i]).charValue()));
       }
     }
     ps.println(']');
   }
 
-  public static final void println_array_char_as_ints(java.io.PrintStream ps, /*@Nullable*/ List<Character> v) {
+  public static final void println_array_char_as_ints(
+      java.io.PrintStream ps, /*@Nullable*/ List<Character> v) {
     if (v == null) {
       ps.println("null");
       return;
@@ -998,7 +1017,7 @@ public final class Runtime {
     int size = v.size();
     if (size > 0) {
       ps.print(Character.getNumericValue(v.get(0).charValue()));
-      for (int i=1; i<size; i++) {
+      for (int i = 1; i < size; i++) {
         ps.print(' ');
         ps.print(Character.getNumericValue(v.get(i).charValue()));
       }
@@ -1016,7 +1035,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print((a[0]).length);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print((a[i]).length);
       }
@@ -1034,7 +1053,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print(a[0]);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print(a[i]);
       }
@@ -1049,16 +1068,17 @@ public final class Runtime {
     }
     ps.print('[');
     if (a.length > 0) {
-      ps.print(((Double)a[0]).doubleValue());
-      for (int i=1; i<a.length; i++) {
+      ps.print(((Double) a[0]).doubleValue());
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
-        ps.print(((Double)a[i]).doubleValue());
+        ps.print(((Double) a[i]).doubleValue());
       }
     }
     ps.println(']');
   }
 
-  public static final void println_array_double(java.io.PrintStream ps, /*@Nullable*/ List<Double> v) {
+  public static final void println_array_double(
+      java.io.PrintStream ps, /*@Nullable*/ List<Double> v) {
     if (v == null) {
       ps.println("null");
       return;
@@ -1067,7 +1087,7 @@ public final class Runtime {
     int size = v.size();
     if (size > 0) {
       ps.print(v.get(0).doubleValue());
-      for (int i=1; i<size; i++) {
+      for (int i = 1; i < size; i++) {
         ps.print(' ');
         ps.print(v.get(i).doubleValue());
       }
@@ -1076,7 +1096,8 @@ public final class Runtime {
   }
 
   // Print the lengths of the elements of the top-level array.
-  public static final void println_array_2d_size(java.io.PrintStream ps, double /*@Nullable*/ [][] a) {
+  public static final void println_array_2d_size(
+      java.io.PrintStream ps, double /*@Nullable*/ [][] a) {
     if (a == null) {
       ps.println("null");
       return;
@@ -1084,7 +1105,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print((a[0]).length);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print((a[i]).length);
       }
@@ -1102,7 +1123,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print(a[0]);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print(a[i]);
       }
@@ -1117,16 +1138,17 @@ public final class Runtime {
     }
     ps.print('[');
     if (a.length > 0) {
-      ps.print(((Float)a[0]).floatValue());
-      for (int i=1; i<a.length; i++) {
+      ps.print(((Float) a[0]).floatValue());
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
-        ps.print(((Float)a[i]).floatValue());
+        ps.print(((Float) a[i]).floatValue());
       }
     }
     ps.println(']');
   }
 
-  public static final void println_array_float(java.io.PrintStream ps, /*@Nullable*/ List<Float> v) {
+  public static final void println_array_float(
+      java.io.PrintStream ps, /*@Nullable*/ List<Float> v) {
     if (v == null) {
       ps.println("null");
       return;
@@ -1135,7 +1157,7 @@ public final class Runtime {
     int size = v.size();
     if (size > 0) {
       ps.print(v.get(0).floatValue());
-      for (int i=1; i<size; i++) {
+      for (int i = 1; i < size; i++) {
         ps.print(' ');
         ps.print(v.get(i).floatValue());
       }
@@ -1144,7 +1166,8 @@ public final class Runtime {
   }
 
   // Print the lengths of the elements of the top-level array.
-  public static final void println_array_2d_size(java.io.PrintStream ps, float /*@Nullable*/ [][] a) {
+  public static final void println_array_2d_size(
+      java.io.PrintStream ps, float /*@Nullable*/ [][] a) {
     if (a == null) {
       ps.println("null");
       return;
@@ -1152,7 +1175,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print((a[0]).length);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print((a[i]).length);
       }
@@ -1170,7 +1193,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print(a[0]);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print(a[i]);
       }
@@ -1185,16 +1208,17 @@ public final class Runtime {
     }
     ps.print('[');
     if (a.length > 0) {
-      ps.print(((Integer)a[0]).intValue());
-      for (int i=1; i<a.length; i++) {
+      ps.print(((Integer) a[0]).intValue());
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
-        ps.print(((Integer)a[i]).intValue());
+        ps.print(((Integer) a[i]).intValue());
       }
     }
     ps.println(']');
   }
 
-  public static final void println_array_int(java.io.PrintStream ps, /*@Nullable*/ List<Integer> v) {
+  public static final void println_array_int(
+      java.io.PrintStream ps, /*@Nullable*/ List<Integer> v) {
     if (v == null) {
       ps.println("null");
       return;
@@ -1203,7 +1227,7 @@ public final class Runtime {
     int size = v.size();
     if (size > 0) {
       ps.print(v.get(0).intValue());
-      for (int i=1; i<size; i++) {
+      for (int i = 1; i < size; i++) {
         ps.print(' ');
         ps.print(v.get(i).intValue());
       }
@@ -1220,7 +1244,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print((a[0]).length);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print((a[i]).length);
       }
@@ -1238,7 +1262,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print(a[0]);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print(a[i]);
       }
@@ -1253,10 +1277,10 @@ public final class Runtime {
     }
     ps.print('[');
     if (a.length > 0) {
-      ps.print(((Long)a[0]).longValue());
-      for (int i=1; i<a.length; i++) {
+      ps.print(((Long) a[0]).longValue());
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
-        ps.print(((Long)a[i]).longValue());
+        ps.print(((Long) a[i]).longValue());
       }
     }
     ps.println(']');
@@ -1271,7 +1295,7 @@ public final class Runtime {
     int size = v.size();
     if (size > 0) {
       ps.print(v.get(0).longValue());
-      for (int i=1; i<size; i++) {
+      for (int i = 1; i < size; i++) {
         ps.print(' ');
         ps.print(v.get(i).longValue());
       }
@@ -1288,7 +1312,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print((a[0]).length);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print((a[i]).length);
       }
@@ -1306,7 +1330,7 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print(a[0]);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print(a[i]);
       }
@@ -1321,16 +1345,17 @@ public final class Runtime {
     }
     ps.print('[');
     if (a.length > 0) {
-      ps.print(((Short)a[0]).shortValue());
-      for (int i=1; i<a.length; i++) {
+      ps.print(((Short) a[0]).shortValue());
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
-        ps.print(((Short)a[i]).shortValue());
+        ps.print(((Short) a[i]).shortValue());
       }
     }
     ps.println(']');
   }
 
-  public static final void println_array_short(java.io.PrintStream ps, /*@Nullable*/ List<Short> v) {
+  public static final void println_array_short(
+      java.io.PrintStream ps, /*@Nullable*/ List<Short> v) {
     if (v == null) {
       ps.println("null");
       return;
@@ -1339,7 +1364,7 @@ public final class Runtime {
     int size = v.size();
     if (size > 0) {
       ps.print(v.get(0).shortValue());
-      for (int i=1; i<size; i++) {
+      for (int i = 1; i < size; i++) {
         ps.print(' ');
         ps.print(v.get(i).shortValue());
       }
@@ -1348,7 +1373,8 @@ public final class Runtime {
   }
 
   // Print the lengths of the elements of the top-level array.
-  public static final void println_array_2d_size(java.io.PrintStream ps, short /*@Nullable*/ [][] a) {
+  public static final void println_array_2d_size(
+      java.io.PrintStream ps, short /*@Nullable*/ [][] a) {
     if (a == null) {
       ps.println("null");
       return;
@@ -1356,14 +1382,13 @@ public final class Runtime {
     ps.print('[');
     if (a.length > 0) {
       ps.print((a[0]).length);
-      for (int i=1; i<a.length; i++) {
+      for (int i = 1; i < a.length; i++) {
         ps.print(' ');
         ps.print((a[i]).length);
       }
     }
     ps.println(']');
   }
-
 
   ///////////////////////////////////////////////////////////////////////////
   /// BytesHelper
@@ -1373,23 +1398,25 @@ public final class Runtime {
 
   // From: package org.hibernate.util;
 
-  public static final int toInt( byte[] bytes ) {
+  public static final int toInt(byte[] bytes) {
     int result = 0;
-    for (int i=0; i<4; i++) {
-      result = ( result << 8 ) - Byte.MIN_VALUE + (int) bytes[i];
+    for (int i = 0; i < 4; i++) {
+      result = (result << 8) - Byte.MIN_VALUE + (int) bytes[i];
     }
     return result;
   }
 
-  public static short toShort( byte[] bytes ) {
-    return (short) ( ( ( - (short) Byte.MIN_VALUE + (short) bytes[0] ) << 8  )
-                     - (short) Byte.MIN_VALUE + (short) bytes[1] );
+  public static short toShort(byte[] bytes) {
+    return (short)
+        (((-(short) Byte.MIN_VALUE + (short) bytes[0]) << 8)
+            - (short) Byte.MIN_VALUE
+            + (short) bytes[1]);
   }
 
   public static final byte[] toBytes(int value) {
     byte[] result = new byte[4];
-    for (int i=3; i>=0; i--) {
-      result[i] = (byte) ( ( 0xFFl & value ) + Byte.MIN_VALUE );
+    for (int i = 3; i >= 0; i--) {
+      result[i] = (byte) ((0xFFl & value) + Byte.MIN_VALUE);
       value >>>= 8;
     }
     return result;
@@ -1397,8 +1424,8 @@ public final class Runtime {
 
   public static byte[] toBytes(short value) {
     byte[] result = new byte[2];
-    for (int i=1; i>=0; i--) {
-      result[i] = (byte) ( ( 0xFFl & value )  + Byte.MIN_VALUE );
+    for (int i = 1; i >= 0; i--) {
+      result[i] = (byte) ((0xFFl & value) + Byte.MIN_VALUE);
       value >>>= 8;
     }
     return result;
@@ -1406,9 +1433,10 @@ public final class Runtime {
 
   // More efficient version that doesn't allocate a lot of arrays.
   static final byte[] toBytesStaticResult = new byte[4];
+
   private static final void toBytesStatic(int value) {
-    for (int i=3; i>=0; i--) {
-      toBytesStaticResult[i] = (byte) ( ( 0xFFl & value ) + Byte.MIN_VALUE );
+    for (int i = 3; i >= 0; i--) {
+      toBytesStaticResult[i] = (byte) ((0xFFl & value) + Byte.MIN_VALUE);
       value >>>= 8;
     }
   }
@@ -1421,5 +1449,4 @@ public final class Runtime {
       throw new Error(e);
     }
   }
-
 }
